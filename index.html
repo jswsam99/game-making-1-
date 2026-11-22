@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -75,7 +75,17 @@
   .pad button{border:1px solid var(--rule);background:var(--panel2);color:var(--ink);border-radius:9px;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none}
   .pad button:active{background:#26343a}
   #b-up{grid-column:2;grid-row:1}#b-left{grid-column:1;grid-row:2}#b-down{grid-column:2;grid-row:2}#b-right{grid-column:3;grid-row:2}
-  #b-act{grid-column:4;grid-row:1/3;background:var(--line);border-color:var(--line);color:#fff;font-weight:700;font-size:18px}
+  #b-talk{grid-column:4;grid-row:2;background:#2a3b52;border-color:#3d5578;color:#dbe8ff;font-weight:700;font-size:14px}
+  .talk{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(560px,calc(100% - 24px));background:#0f1619f2;border:1px solid var(--rule);border-radius:14px;padding:14px 16px;z-index:12;box-shadow:0 12px 30px #000a;display:flex;flex-direction:column;gap:8px}
+  .talk-who{font-size:12px;font-weight:700;color:var(--led);letter-spacing:.04em}
+  .talk p{margin:0;font-size:17px;font-weight:700;line-height:1.4}
+  .talk p.good{color:#9ee6ae}.talk p.bad{color:#ff9a9a}
+  .talk-opts{display:flex;flex-direction:column;gap:6px}
+  .talk-opts button{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--rule);background:var(--panel2);color:var(--ink);border-radius:10px;padding:9px 12px;font-size:15px;cursor:pointer}
+  .talk-opts button:hover,.talk-opts button:focus-visible{border-color:var(--line);outline:none}
+  .talk-opts kbd{flex:0 0 auto;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:#26343a;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .talk small{color:var(--muted);font-size:11px}
+  #b-act{grid-column:4;grid-row:1;background:var(--line);border-color:var(--line);color:#fff;font-weight:700;font-size:18px}
   #b-act.yield{background:#c98a1e;border-color:#c98a1e}
   #b-act.idle{background:var(--panel2);border-color:var(--rule);color:var(--muted)}
   .keys{font-size:12px;color:var(--muted);margin:0}
@@ -181,6 +191,7 @@
     <div class="tools">
       <button class="chip view" id="t-view">1인칭 시점</button>
       <button class="chip" id="t-map" hidden>미니맵 끄기</button>
+      <button class="chip" id="t-gfx" hidden>그래픽 높음</button>
       <button class="chip" id="t-sound">소리 켜짐</button>
       <button class="chip" id="t-pause">일시정지</button>
     </div>
@@ -205,6 +216,12 @@
     </div>
     <canvas id="cv" width="960" height="440"></canvas>
     <div class="toast" id="toast" style="opacity:0"></div>
+    <div class="talk" id="talk" hidden role="dialog" aria-label="대화">
+      <div class="talk-who" id="talk-who"></div>
+      <p id="talk-line"></p>
+      <div class="talk-opts" id="talk-opts"></div>
+      <small>1 · 2 · 3 으로 고르기 · Esc 닫기 · 대화하는 동안 시간이 느리게 흘러요</small>
+    </div>
   </div>
 
   <div class="deck">
@@ -222,14 +239,15 @@
       <button id="b-down" aria-label="아래로">▼</button>
       <button id="b-right" aria-label="오른쪽으로">▶</button>
       <button id="b-act">앉기</button>
+      <button id="b-talk">대화 T</button>
     </div>
   </div>
-  <p class="keys" id="keys-top"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> 한 칸 이동 (“잠시만요” — 절반은 비켜주고 절반은 안 비켜줌) · <kbd>Space</kbd> 앉기 / 양보 / 일어나기 · <kbd>V</kbd> 1인칭 시점 · <kbd>Esc</kbd> 일시정지 · 바닥이나 좌석을 눌러도 이동합니다</p>
-  <p class="keys" id="keys-fp" hidden><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / 방향키 — 보는 방향 기준으로 한 칸 이동 · <kbd>Q</kbd><kbd>E</kbd> 90° 돌기 · 화면을 한 번 클릭하면 <b>마우스를 움직이는 대로 시점이 따라감</b> (<kbd>Esc</kbd> 해제) · 조준점(가운데 점)으로 좌석·바닥을 클릭해 이동 · <kbd>Space</kbd> 앉기 / 양보 / 일어나기 · <kbd>M</kbd> 미니맵 켜기/끄기 · <kbd>V</kbd> 위에서 보기 · 휴대폰은 화면을 드래그해 둘러봅니다</p>
+  <p class="keys" id="keys-top"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> 한 칸 이동 (“잠시만요” — 절반은 비켜주고 절반은 안 비켜줌) · <kbd>Space</kbd> 앉기 / 양보 / 일어나기 · <kbd>T</kbd> 옆 사람에게 말 걸기 · <kbd>V</kbd> 1인칭 시점 · <kbd>Esc</kbd> 일시정지 · 바닥이나 좌석을 눌러도 이동합니다</p>
+  <p class="keys" id="keys-fp" hidden><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / 방향키 — 보는 방향 기준으로 한 칸 이동 · <kbd>Q</kbd><kbd>E</kbd> 90° 돌기 · 화면을 한 번 클릭하면 <b>마우스를 움직이는 대로 시점이 따라감</b> (<kbd>Esc</kbd> 해제) · 조준점(가운데 점)으로 좌석·바닥을 클릭해 이동 · <kbd>Space</kbd> 앉기 / 양보 / 일어나기 · <kbd>T</kbd> 조준점 앞 사람에게 말 걸기 · <kbd>M</kbd> 미니맵 켜기/끄기 · <kbd>V</kbd> 위에서 보기 · 휴대폰은 화면을 드래그해 둘러봅니다</p>
 
   <section class="notes">
     <header>
-      <h2>관찰 노트<small id="n-count">0/18</small></h2>
+      <h2>관찰 노트<small id="n-count">0/20</small></h2>
       <button class="linkbtn" id="n-reset">기록 전부 지우기</button>
     </header>
     <ul id="notes"></ul>
@@ -239,6 +257,15 @@
 <div class="modal" id="modal"><div class="card" id="card"></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- three.js add-ons for the first-person view: area lights for the ceiling strips, bloom and a final camera pass -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lights/RectAreaLightUniformsLib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
 (() => {
 'use strict';
@@ -360,6 +387,8 @@ const GUIDE = [
   ['mom', '👶 아기 엄마', '타자마자 앉아 있는 젊은 사람 앞으로 곧장 온다. “아기 안고 있어서요…”로 시작해 대놓고 양보를 요구하고, 아기가 울면 주변 시선이 폭발한다.'],
   ['wheel', '♿ 휠체어 이용자', '문 옆 공간에 자리해서 그쪽 문은 드나들기 어렵다. 아무도 밀고 지나갈 수 없으니 다른 문을 노려라. 내릴 때는 모두가 길을 비켜준다.'],
   ['season', '🌦️ 계절과 날씨', '여름엔 반팔, 겨울엔 롱패딩. 비나 눈이 오면 우산 든 사람이 늘고 평소보다 붐빈다. 미세먼지 날엔 마스크가 가득. 잠실나루~한양대는 지상 구간이라 창밖으로 날씨가 보인다.'],
+  ['talk', '🗣️ 말 걸기', '옆에 붙어서 T를 누르면 말을 걸 수 있다. 앉은 사람에게 자리를 부탁하면 내릴 때 맡아주기도 한다. 등산복 아저씨는 내리는 역을 속이고, 조는 사람을 깨우면 가끔 내릴 역을 놓친 걸 깨닫는다.'],
+  ['jeer', '📢 배려석의 법칙', '노약자석이나 임산부 배려석에 앉으면 곧 누군가 “일어나세요”라고 말을 건다. 거절하거나 못 들은 척하면 주변에서 한꺼번에 야유가 쏟아지고 눈치가 폭주한다. 버텨도 잠시 뒤 두 번째 경고가 온다.'],
   ['stare', '👀 눈치의 법칙', '서 있는 교통약자 주변 사람들은 가장 “젊은” 착석자를 쳐다본다. 대학생이 제일 먼저, 직장인은 자는 척하다 마지막에 일어난다.'],
   ['pregnant', '🤰 임산부', '처음엔 배지만 보인다. 주변이 배지를 알아채는 순간 시선이 몰린다. 분홍 배려석이면 눈치 2.5배.'],
   ['child', '🧒 아이와 부모', '아이가 “다리 아파…” 하면 눈치가 한꺼번에 튄다. 아이가 앉으면 부모는 바로 옆에 선다.'],
@@ -472,6 +501,10 @@ const Snd = {
   push() { this.tone(140, .08, 'triangle', .05); },
   whoosh() { this.tone(380, .32, 'sine', .06, 0, 1300); },
   cry() { this.tone(520, .45, 'sawtooth', .03, 0, 700); this.tone(610, .55, 'sawtooth', .03, .5, 480); },
+  boo() {   // a low, ragged chorus of "우우~"
+    for (let i = 0; i < 6; i++) this.tone(150 + Math.random() * 90, 1.1 + Math.random() * .4, 'sawtooth', .025, i * .07, 95 + Math.random() * 30);
+    this.noise(1.2, .06, 'bandpass', 400, .05);
+  },
   thud() { this.tone(150, .14, 'triangle', .1, 0, 70); },
   star(i) { this.tone(880 * Math.pow(1.26, i), .35, 'triangle', .08); },
 };
@@ -549,6 +582,7 @@ function makeLook(kind) {
   L.hat = kind === 'elder' && !L.fem && Math.random() < .5 ? pick(['#6b5b4a', '#3c3f44']) : null;
   L.long = ['office', 'elder', 'parent'].includes(kind) && Math.random() < .45;
   L.brief = kind === 'office' && Math.random() < .4;
+  if (!['office', 'elder', 'me', 'wheel'].includes(kind) && Math.random() < .45) { L.jeans = true; L.pants = pick(['#3a4f6e', '#2d3e5a', '#4b6a8f', '#22314a', '#5a7393']); }
   if (kind === 'mom') { L.coat = pick(['#e8dccb', '#c9d6df', '#f1c6c6', '#9fb8a0']); L.hair = pick(['#2a1a14', '#4a2e1c']); L.hairStyle = pick(['pony', 'bob']); L.baby = pick(['#ffd6e0', '#cde7ff', '#fff1b8']); L.bag = pick(['#8fa9c9', '#d9b3c8']); L.coatD = shade(L.coat, -30); L.coatL = shade(L.coat, 24); }
   if (kind === 'wheel') { L.coat = pick(['#3d5a80', '#6b4f3a', '#44475a', '#7a8b6f']); L.coatD = shade(L.coat, -30); L.coatL = shade(L.coat, 24); }
   if (G && G.season) seasonalize(L, kind);
@@ -629,6 +663,7 @@ function canReach(p, s) {
   return false;
 }
 function allowedSeat(p, s) {
+  if (s.holdForP > G.t && p !== P) return false;   // someone promised you this seat
   if (s.claim && s.claim !== p) return false;
   if (p === P || isPrio(p)) return true;
   if (p.kind === 'ajumma' && p.hasBag) return false;   // she never just sits — the bag goes first
@@ -658,7 +693,7 @@ function playerEyeing(s) {
 }
 function canThrow(a, s) {
   return a.kind === 'ajumma' && a.hasBag && a.state === 'stand' && !a.out && !a.claimSeat && !a.sq &&
-    s.type !== 'prio' && Math.abs(a.c - s.c) <= 7;
+    s.type !== 'prio' && Math.abs(a.c - s.c) <= 7 && !(s.holdForP > G.t) && !(a.calmUntil > G.t && Math.abs(P.c - s.c) <= 3);
 }
 function planThrow(s) {
   if (s.occ || s.claim || s.bag || s.throwPlan) return;
@@ -735,6 +770,8 @@ function sitDown(p, s) {
     // sooner or later an elder or a pregnant passenger will come and stand in front of you
     G.targetAt = G.t + [12, 10, 8, 7, 5][G.idx] + Math.random() * 5;
     G.targetToast = false;
+    // a pink or priority seat: someone nearby will have something to say in a moment
+    G.seatWarnAt = s.type === 'reg' ? null : G.t + 2 + Math.random() * 2; G.jeerUntil = 0; G.jeers = 0;
     Snd.sit(); burst(s.x, s.y, '#8be29f', 16);
     floatText(s.x, s.y - 30, s.type === 'reg' ? '착석!' : s.type === 'pink' ? '배려석… 괜찮을까' : '노약자석… 눈치 조심', '#8be29f');
   } else if (p.kind === 'hunter' && G.running) {
@@ -768,6 +805,10 @@ function standFromSeat(p, leaving) {
   s.occ = null; p.seat = null;
   place(p, cell[0], cell[1]);
   p.state = leaving ? 'leave' : 'stand'; p.upAt = null; p.forceUpAt = null; p.pressure = 0;
+  if (leaving && p.promise && P.state === 'stand' && Math.abs(P.c - s.c) <= 3) {   // keeps the promise
+    s.holdForP = G.t + 3.5; p.promise = false;
+    tmp(p, '여기 앉으세요~', 2, 'info'); toast('약속대로 자리를 맡아줬어요 · 3초 안에 앉으세요');
+  }
   if (leaving) {
     p.goal = doorGoal(p); p.speed = p.kind === 'elder' ? .34 : .18;
     if (p.tell && ['office', 'student', 'elder', 'shopper'].includes(p.kind)) unlock(p.kind);
@@ -818,6 +859,11 @@ function sendTarget() {
 function clearTargets() {
   G.targetAt = null; G.wantTarget = null;
   for (const q of G.people) q.targetP = false;
+  if (G.jeerUntil > G.t) {   // you got up mid-booing
+    const b = G.people.find(n => n !== P && n.state === 'stand' && !n.out && Math.abs(n.c - P.c) <= 3);
+    if (b) tmp(b, pick(['진작 일어나지…', '에휴, 이제야', '(박수) 짝짝짝']), 1.8, 'soft');
+  }
+  G.jeerUntil = 0; G.seatWarnAt = null;
 }
 function playerStand() {
   const s = P.seat;
@@ -922,6 +968,13 @@ function arrive() {
   G.phase = 'stop'; G.pt = 0; G.doorTarget = 1; G.boardT = 0; G.shake = .35;
   Snd.open();
   if (s >= HOME) { G.over = true; setTimeout(finishDay, 1300); return; }
+  for (const q of G.people) if (q.liedAt === s) {   // "I get off at the next stop" — you didn't
+    q.liedAt = null; q.excusedUntil = 0;
+    if (P.state === 'seat' && q.state === 'stand' && !q.out) {
+      P.pressure += 1.2; tmp(q, '다음 역에서 내린다면서요?', 2.2, 'alert'); toast('거짓말이 들통났다…');
+      for (const b of G.people) if (b !== P && b.state === 'stand' && !isPrio(b) && Math.abs(b.c - P.c) <= 3) { b.stareAt = P; b.stareUntil = G.t + 4; }
+    }
+  }
   if (isXfer(s)) { unlock('xfer'); toast(`환승역 · ${ST[s][2].x.join(' · ')} — 우르르 내리고 우르르 탑니다`); }
   for (const p of G.people) {
     if (p.state === 'seat' && p.dest === s && p !== P) {
@@ -1071,6 +1124,7 @@ function ai() {
     for (const s of SEATS) {
       const o = s.occ;
       if (!o || o === P || o.state !== 'seat' || s.type === 'prio' || claimed.has(s)) continue;
+      if (h.avoidUntil > G.t && Math.abs(s.c - P.c) <= 2) continue;   // told off: keeps away from you for a while
       if (!(o.tell || o.feintUntil > G.t)) continue;
       const cst = Math.abs(h.c - s.c) + Math.abs(h.r - frontRow(s.side));
       if (cst < bc) { bc = cst; best = s; }
@@ -1171,6 +1225,7 @@ function pressureTick(dt) {
     }
     if (!tgt) continue;
     const o = tgt.occ;
+    if (o === P && q.excusedUntil > G.t) continue;   // you talked your way out of it (for now)
     const starers = q.noticed ? G.people.filter(n => n !== P && n !== q && n.state === 'stand' && !n.out && !isPrio(n) && n.kind !== 'wheel' &&
       Math.max(Math.abs(n.r - q.r), Math.abs(n.c - q.c)) <= 2).slice(0, 4) : [];
     // bystanders tell you to your face
@@ -1204,13 +1259,21 @@ function pressureTick(dt) {
     }
     if (q.kind === 'elder' && Math.random() < dt * .12) tmp(q, '에구구…', 1.4, 'soft');
   }
+  // the whole carriage is booing: survivable the first time, not the second
+  if (P.state === 'seat' && G.jeerUntil > G.t) { P.pressure += dt * .16 * G.jeers; P._pressed = true; }
   for (const p of G.people) {
     if (p.state !== 'seat') continue;
     if (!p._pressed) { p.pressure = Math.max(0, p.pressure - dt * .35); continue; }
     if (p === P) {
       if (p.pressure > .8) unlock('stare');
       if (Math.random() < dt * 6 * (p.pressure / PMAX)) sweat(P.px, P.py);
-      if (p.pressure >= PMAX) playerYield(p._by, true);
+      if (p.pressure >= PMAX) {
+        if (p._by && p._by.state === 'stand' && !p._by.out && G.jeerUntil <= G.t) playerYield(p._by, true);
+        else {
+          playerStand(); G.penalty += 6; G.forced++; Snd.bad();
+          toast('야유를 못 이기고 일어났다… −1분'); floatText(P.px, P.py - 40, '−1분', '#ff8a8a');
+        }
+      }
       continue;
     }
     const k = K[p.kind];
@@ -1309,6 +1372,7 @@ function update(dt) {
     }
   }
   pressureTick(dt);
+  seatWarnTick(dt);
 }
 
 /* ================= render ================= */
@@ -1347,13 +1411,28 @@ function buildStatic() {
     c.fillStyle = '#3a4247'; c.fillRect(gx + 10, 40, X0 - 20, 6); c.fillRect(gx + 10, H - 46, X0 - 20, 6);
   }
   for (const ex of [X0 - 10, X0 + 12 * CW]) { c.fillStyle = '#b9bdb6'; c.fillRect(ex, 0, 10, H); c.fillStyle = '#3d4950'; c.fillRect(ex + 2, 160, 6, 120); }
-  // floor
+  // floor: mottled grey vinyl, speckled, scuffed, worn lighter down the middle of the aisle
   const fl = c.createLinearGradient(0, 40, 0, 400);
-  fl.addColorStop(0, '#c7cac1'); fl.addColorStop(.5, '#d4d7ce'); fl.addColorStop(1, '#c7cac1');
+  fl.addColorStop(0, '#b9bcb4'); fl.addColorStop(.5, '#cdd0c7'); fl.addColorStop(1, '#b9bcb4');
   c.fillStyle = fl; c.fillRect(X0, 40, 12 * CW, 360);
-  for (let i = 0; i < 2600; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.14)'; c.fillRect(X0 + Math.random() * 768, 40 + Math.random() * 360, 1.4, 1.4); }
-  c.strokeStyle = 'rgba(0,0,0,.06)'; c.lineWidth = 1;
+  c.save(); c.beginPath(); c.rect(X0, 40, 12 * CW, 360); c.clip();
+  for (let i = 0; i < 70; i++) {
+    const x = X0 + Math.random() * 768, y = 40 + Math.random() * 360, rr = 20 + Math.random() * 60, g = c.createRadialGradient(x, y, 0, x, y, rr);
+    g.addColorStop(0, Math.random() < .5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+  }
+  for (let i = 0; i < 9000; i++) { c.fillStyle = pick(['rgba(0,0,0,.08)', 'rgba(255,255,255,.18)', 'rgba(70,80,90,.12)', 'rgba(160,150,130,.12)']); const sz = .6 + Math.random() * 1.2; c.fillRect(X0 + Math.random() * 768, 40 + Math.random() * 360, sz, sz); }
+  for (let i = 0; i < 40; i++) { c.strokeStyle = 'rgba(40,40,40,.08)'; c.lineWidth = .6 + Math.random(); c.beginPath(); c.arc(X0 + Math.random() * 768, 110 + Math.random() * 220, 4 + Math.random() * 14, Math.random() * 6, Math.random() * 6 + 1); c.stroke(); }
+  const lane = c.createLinearGradient(0, 150, 0, 290); lane.addColorStop(0, 'rgba(255,255,255,0)'); lane.addColorStop(.5, 'rgba(255,255,255,.08)'); lane.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = lane; c.fillRect(X0, 150, 768, 140);
+  c.restore();
+  c.strokeStyle = 'rgba(0,0,0,.05)'; c.lineWidth = 1;
   for (let x = X0 + CW * 1.5; x < X0 + 768; x += CW * 3) { c.beginPath(); c.moveTo(x, 106); c.lineTo(x, 334); c.stroke(); }
+  // contact shadow under the bench fronts and at the foot of the walls
+  for (const [y0, y1, a] of [[104, 128, .22], [336, 312, .22], [40, 52, .25], [400, 388, .25]]) {
+    const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(X0, Math.min(y0, y1), 768, Math.abs(y1 - y0));
+  }
   // door vestibules with tactile strip
   for (const dc of DOORS) {
     const x = X0 + dc * CW;
@@ -1366,7 +1445,9 @@ function buildStatic() {
   // benches
   for (const side of [0, 1]) for (const [c0, c1] of [[0, 2], [4, 10]]) {
     const x = X0 + c0 * CW + 2, w = (c1 - c0 + 1) * CW - 4, y = side ? 334 : 40;
-    c.fillStyle = '#434a52'; rrPath(c, x, y, w, 66, 6); c.fill();
+    const fg = c.createLinearGradient(0, y, 0, y + 66);
+    fg.addColorStop(0, '#3b4148'); fg.addColorStop(side ? .1 : .9, '#5a626a'); fg.addColorStop(1, '#30363c');
+    c.fillStyle = fg; rrPath(c, x, y, w, 66, 6); c.fill();
     for (let col = c0; col <= c1; col++) {
       const type = PRIO.includes(col) ? 'prio' : PINK.includes(col) ? 'pink' : 'reg', pal = SEATPAL[type];
       const sx = X0 + col * CW + 4, sw = CW - 8;
@@ -1374,8 +1455,18 @@ function buildStatic() {
       const cy = side ? 337 : 55, g = c.createLinearGradient(0, cy, 0, cy + 47);
       g.addColorStop(side ? 1 : 0, pal.base); g.addColorStop(side ? 0 : 1, pal.light);
       c.fillStyle = g; rrPath(c, sx, cy, sw, 47, 8); c.fill();
-      c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = 1; c.stroke();
-      c.strokeStyle = 'rgba(255,255,255,.14)'; c.setLineDash([3, 3]); rrPath(c, sx + 5, cy + 5, sw - 10, 37, 6); c.stroke(); c.setLineDash([]);
+      c.save(); rrPath(c, sx, cy, sw, 47, 8); c.clip();
+      // woven moquette motif and pile
+      c.fillStyle = 'rgba(0,0,0,.12)';
+      for (let yy = cy; yy < cy + 47; yy += 8) for (let xx = sx + ((yy - cy) / 8 % 2 ? 4 : 0); xx < sx + sw; xx += 8) { c.beginPath(); c.moveTo(xx + 4, yy + 1); c.lineTo(xx + 7, yy + 4); c.lineTo(xx + 4, yy + 7); c.lineTo(xx + 1, yy + 4); c.closePath(); c.fill(); }
+      for (let i = 0; i < 260; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)'; c.fillRect(sx + Math.random() * sw, cy + Math.random() * 47, 1, 1); }
+      // the dip where people sit, and the rounded front edge catching the ceiling light
+      const dip = c.createRadialGradient(X(col), cy + 22, 2, X(col), cy + 22, 26); dip.addColorStop(0, 'rgba(0,0,0,.14)'); dip.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = dip; c.fillRect(sx, cy, sw, 47);
+      const edge = c.createLinearGradient(0, side ? cy : cy + 47, 0, side ? cy + 9 : cy + 38); edge.addColorStop(0, 'rgba(255,255,255,.22)'); edge.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = edge; c.fillRect(sx, cy, sw, 47);
+      c.restore();
+      c.strokeStyle = 'rgba(0,0,0,.28)'; c.lineWidth = 1; rrPath(c, sx, cy, sw, 47, 8); c.stroke();
       if (type === 'pink') pregIcon(c, X(col), cy + 25, 'rgba(255,255,255,.7)');
     }
     c.font = `700 9px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = 'rgba(255,255,255,.85)';
@@ -1388,7 +1479,10 @@ function buildStatic() {
     c.fillStyle = 'rgba(165,190,200,.55)'; c.fillRect(px - 3, y, 6, 82);
     c.strokeStyle = '#7f8b91'; c.lineWidth = 1; c.strokeRect(px - 3, y, 6, 82);
     const py = side ? 318 : 122;
-    c.fillStyle = '#9aa1a6'; circ(c, px, py, 4.5); c.fill(); c.fillStyle = '#e4e8ea'; circ(c, px - 1.2, py - 1.2, 1.6); c.fill();
+    const pg = c.createRadialGradient(px - 1.5, py - 1.5, .5, px, py, 5);
+    pg.addColorStop(0, '#ffffff'); pg.addColorStop(.4, '#b8bec3'); pg.addColorStop(1, '#5e656b');
+    c.fillStyle = 'rgba(0,0,0,.25)'; circ(c, px + 2, py + 3, 5); c.fill();
+    c.fillStyle = pg; circ(c, px, py, 4.5); c.fill();
   }
 }
 const LIGHT = document.createElement('canvas');
@@ -1536,6 +1630,11 @@ function targetPos(p) {
   if (p.state === 'seat') return [p.seat.x, p.seat.y];
   return [X(p.c) + p.jx, RY[p.r] + p.jy];
 }
+const lit = (x, y, rad, col, rx = 1, ry = 1) => {
+  const g = ctx.createRadialGradient(x - rad * .35 * rx, y - rad * .45 * ry, rad * .08, x, y, rad * 1.05);
+  g.addColorStop(0, shade(col, 34)); g.addColorStop(.55, col); g.addColorStop(1, shade(col, -42));
+  return g;
+};
 function drawPerson(p) {
   const L = p.look, f = p.face, seated = p.state === 'seat' || p.kind === 'wheel', s = p.kind === 'child' ? .74 : 1;
   let x = p.px, y = p.py;
@@ -1557,8 +1656,10 @@ function drawPerson(p) {
     ctx.beginPath(); ctx.moveTo(-14, -f * 16); ctx.lineTo(-14, -f * 22); ctx.moveTo(14, -f * 16); ctx.lineTo(14, -f * 22); ctx.stroke();
   }
   if (seated) {
-    ctx.fillStyle = L.pants;
-    rrPath(ctx, -11, f > 0 ? 4 : -26, 9, 22, 4); ctx.fill(); rrPath(ctx, 2, f > 0 ? 4 : -26, 9, 22, 4); ctx.fill();
+    for (const lx of [-11, 2]) {
+      const lg = ctx.createLinearGradient(lx, 0, lx + 9, 0); lg.addColorStop(0, shade(L.pants, -30)); lg.addColorStop(.4, shade(L.pants, 22)); lg.addColorStop(1, shade(L.pants, -38));
+      ctx.fillStyle = lg; rrPath(ctx, lx, f > 0 ? 4 : -26, 9, 22, 4); ctx.fill();
+    }
     ctx.fillStyle = '#1b1d20'; ell(ctx, -6.5, f * 28, 5, 3.5); ctx.fill(); ell(ctx, 6.5, f * 28, 5, 3.5); ctx.fill();
   }
   if (L.backpack && !seated) { ctx.fillStyle = L.backpack; rrPath(ctx, -13, f > 0 ? -19 : 7, 26, 12, 5); ctx.fill(); }
@@ -1574,8 +1675,12 @@ function drawPerson(p) {
     ctx.fillStyle = '#6b6f75'; circ(ctx, 19, f * 3, 2); ctx.fill();
   }
   const sw = p.moving ? Math.sin(p.walk) * 2.5 : 0, pad = L.padding ? 1.12 : 1;
-  ctx.fillStyle = L.short ? L.skin : L.coatD; circ(ctx, -16.5 * pad, f * 2 + sw, 5.5); ctx.fill(); circ(ctx, 16.5 * pad, f * 2 - sw, 5.5); ctx.fill();
-  ctx.fillStyle = L.coat; ell(ctx, 0, 0, 18 * pad, 11.5 * pad); ctx.fill();
+  for (const [ax, ay] of [[-16.5 * pad, f * 2 + sw], [16.5 * pad, f * 2 - sw]]) { ctx.fillStyle = lit(ax, ay, 5.8, L.short ? L.skin : L.coat); circ(ctx, ax, ay, 5.5); ctx.fill(); }
+  ctx.save(); ctx.scale(1, .64); ctx.fillStyle = lit(0, 0, 18.5 * pad, L.coat, 1, .64); ell(ctx, 0, 0, 18 * pad, 18 * pad); ctx.fill(); ctx.restore();
+  ell(ctx, 0, 0, 18 * pad, 11.5 * pad);
+  ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = .8;   // fabric folds across the shoulders
+  ctx.beginPath(); ctx.moveTo(-9, -f * 2); ctx.quadraticCurveTo(-4, f * 3, -1, f * 7); ctx.moveTo(9, -f * 2); ctx.quadraticCurveTo(4, f * 3, 1, f * 7); ctx.stroke();
+  ell(ctx, 0, 0, 18 * pad, 11.5 * pad);
   ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = 1.2; ctx.stroke();
   if (L.padding) { ctx.strokeStyle = 'rgba(255,255,255,.13)'; ctx.lineWidth = 1; for (const dy of [-5, 0, 5]) { ctx.beginPath(); ctx.moveTo(-17, dy); ctx.quadraticCurveTo(0, dy + 2, 17, dy); ctx.stroke(); } }
   ctx.fillStyle = 'rgba(255,255,255,.09)'; ell(ctx, 0, -f * 3, 13, 5); ctx.fill();
@@ -1602,10 +1707,17 @@ function drawPerson(p) {
   }
   let hx = 0, hy = -f;
   if (p.kind === 'sleeper' && seated) { hx = 6 + Math.sin(G.t * 1.3 + p.id) * 1.5; hy = f * 3; }
-  ctx.fillStyle = L.skin; circ(ctx, hx, hy + f * 3.5, 8.5); ctx.fill();
+  ctx.fillStyle = lit(hx, hy + f * 3.5, 8.8, L.skin); circ(ctx, hx, hy + f * 3.5, 8.5); ctx.fill();
   if (L.cap) { ctx.fillStyle = L.cap; circ(ctx, hx, hy - f * .5, 9.5); ctx.fill(); ell(ctx, hx, hy + f * 8, 7, 3.5); ctx.fill(); }
   else {
-    ctx.fillStyle = L.beanie || L.hair; circ(ctx, hx, hy - f * .8, 9.5); ctx.fill();
+    const hc = L.beanie || L.hair;
+    ctx.fillStyle = lit(hx, hy - f * .8, 9.8, hc); circ(ctx, hx, hy - f * .8, 9.5); ctx.fill();
+    if (!L.beanie) {
+      ctx.strokeStyle = shade(hc, 40); ctx.globalAlpha *= .35; ctx.lineWidth = .7;
+      for (const k of [-5, -2, 1, 4]) { ctx.beginPath(); ctx.moveTo(hx + k, hy - f * 9); ctx.quadraticCurveTo(hx + k * 1.4, hy - f * 1, hx + k * 1.1, hy + f * 6); ctx.stroke(); }
+      ctx.globalAlpha /= .35;
+      ctx.fillStyle = 'rgba(255,255,255,.16)'; ell(ctx, hx - 3, hy - f * 3.5, 3.4, 2); ctx.fill();
+    }
     if (L.beanie) { ctx.fillStyle = 'rgba(255,255,255,.7)'; circ(ctx, hx, hy - f * 2, 2.6); ctx.fill(); }
     if (p.kind === 'ajumma') for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; circ(ctx, hx + Math.cos(a) * 8.5, hy - f * .8 + Math.sin(a) * 8.5, 3.6); ctx.fill(); }
     if (L.visor) { ctx.fillStyle = L.visor; ell(ctx, hx, hy + f * 8, 9, 4); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 1; ctx.stroke(); }
@@ -1623,6 +1735,7 @@ function drawPerson(p) {
 function bubbleOf(p) {
   if (p.tmpUntil > G.t) return [p.tmp, p.tmpK];
   if (p.tell && !p.out) return [p.tell, 'tell'];
+  if (p.revealed && p.state === 'seat' && !p.out) return ['🏁 ' + destName(p.shownDest), 'soft'];
   if (p.kind === 'ajumma' && p.state === 'stand' && p.ready) return ['👜 가방끈 꽉', 'tell'];
   if (p.state === 'seat' && p.kind === 'sleeper') return ['💤', 'soft'];
   if (p.state === 'seat' && p.pair != null) return ['💬', 'soft'];
@@ -1688,7 +1801,9 @@ function render(now) {
   const list = G.people.slice().sort((a, b) => a.py - b.py);
   for (const p of list) {
     const s = p.kind === 'child' ? .74 : 1;
-    ctx.fillStyle = 'rgba(0,0,0,.17)'; ell(ctx, p.px + 2 + (p.state === 'seat' ? 0 : G.lean), p.py + 5, 21 * s, 14 * s); ctx.fill();
+    const sx = p.px + 3 + (p.state === 'seat' ? 0 : G.lean), sy = p.py + 6, sg = ctx.createRadialGradient(sx, sy, 2, sx, sy, 24 * s);
+    sg.addColorStop(0, 'rgba(0,0,0,.32)'); sg.addColorStop(.6, 'rgba(0,0,0,.14)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg; ell(ctx, sx, sy, 24 * s, 17 * s); ctx.fill();
   }
   for (const p of list) drawPerson(p);
 
@@ -1927,6 +2042,7 @@ function strip(on) {
   return `<div class="strip">${ST.map((_, i) => `<i class="${i <= on ? 'on' : ''}" style="left:calc(18px + (100% - 47px) * ${i / HOME})"></i>`).join('')}</div>`;
 }
 function showModal(html, actions) {
+  if (TALK.who) closeTalk(true);
   if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
   $('#card').innerHTML = html;
   $('#modal').hidden = false;
@@ -2029,6 +2145,7 @@ const U = {
   box: () => geo('box', () => new THREE.BoxGeometry(1, 1, 1)),
   plane: () => geo('plane', () => new THREE.PlaneGeometry(1, 1)),
   sph: () => geo('sph', () => new THREE.SphereGeometry(1, 14, 10)),
+  head: () => geo('head', () => new THREE.SphereGeometry(1, 26, 20)),
   cyl: () => geo('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 10)),
   limb: () => geo('limb', () => new THREE.CylinderGeometry(1, .82, 1, 9)),
   cap: () => geo('cap', () => new THREE.SphereGeometry(1, 20, 12, 0, Math.PI * 2, 0, Math.PI * .56)),
@@ -2075,6 +2192,64 @@ function fabric(base, dark) {
     for (let y = 0; y < h; y += 8) for (let x = (y / 8) % 2 ? 4 : 0; x < w; x += 8) g.fillRect(x, y, 3, 3);
     for (let i = 0; i < 600; i++) { g.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)'; g.fillRect(Math.random() * w, Math.random() * h, 1, 1); }
   }, [2, 2]);
+}
+
+// ---- surfaces: colour, roughness and normal maps painted once at start-up ----
+function canvasOf(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
+function texFrom(c, repeat, srgb = true) {
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+  if (srgb) t.encoding = THREE.sRGBEncoding;
+  if (repeat) t.repeat.set(repeat[0], repeat[1]);
+  return t;
+}
+// grey height canvas -> tangent-space normal map, so flat boxes pick up weave, grain and seams under the light
+function heightToNormal(hc, strength, repeat) {
+  const w = hc.width, h = hc.height, src = hc.getContext('2d').getImageData(0, 0, w, h).data;
+  return texFrom(canvasOf(w, h, (g) => {
+    const out = g.createImageData(w, h), d = out.data;
+    const Hh = (x, y) => src[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const dx = (Hh(x - 1, y) - Hh(x + 1, y)) * strength, dy = (Hh(x, y + 1) - Hh(x, y - 1)) * strength;
+      const l = Math.hypot(dx, dy, 1), i = (y * w + x) * 4;
+      d[i] = (dx / l * .5 + .5) * 255; d[i + 1] = (dy / l * .5 + .5) * 255; d[i + 2] = (1 / l * .5 + .5) * 255; d[i + 3] = 255;
+    }
+    g.putImageData(out, 0, 0);
+  }), repeat, false);
+}
+const noiseDots = (g, w, h, n, a, size = 1.2) => {
+  for (let i = 0; i < n; i++) { g.fillStyle = Math.random() < .5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`; g.fillRect(Math.random() * w, Math.random() * h, size, size); }
+};
+// woven / knitted / brushed patterns as grey height, used both as a faint colour map and as the normal map
+const WEAVES = {
+  denim: (g, w, h) => { g.fillStyle = '#888'; g.fillRect(0, 0, w, h); g.strokeStyle = '#bbb'; g.lineWidth = 1.4; for (let i = -h; i < w; i += 4) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke(); } noiseDots(g, w, h, 1800, .12); },
+  knit: (g, w, h) => { g.fillStyle = '#777'; g.fillRect(0, 0, w, h); g.fillStyle = '#bbb'; for (let x = 0; x < w; x += 6) for (let y = 0; y < h; y += 6) { g.beginPath(); g.ellipse(x + 3, y + 3, 2, 3, (x / 6) % 2 ? .5 : -.5, 0, 7); g.fill(); } },
+  wool: (g, w, h) => { g.fillStyle = '#999'; g.fillRect(0, 0, w, h); noiseDots(g, w, h, 4000, .18, 1.5); },
+  cotton: (g, w, h) => { g.fillStyle = '#999'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.25)'; for (let y = 0; y < h; y += 2) g.fillRect(0, y, w, 1); for (let x = 0; x < w; x += 2) g.fillRect(x, 0, 1, h); noiseDots(g, w, h, 900, .08); },
+  nylon: (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#555'); gr.addColorStop(.45, '#ddd'); gr.addColorStop(.92, '#bbb'); gr.addColorStop(1, '#333'); g.fillStyle = gr; g.fillRect(0, 0, w, h); },
+  skin: (g, w, h) => { g.fillStyle = '#999'; g.fillRect(0, 0, w, h); noiseDots(g, w, h, 2500, .06); },
+  hair: (g, w, h) => { g.fillStyle = '#666'; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { g.strokeStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},${.15 + Math.random() * .25})`; g.lineWidth = .8; const x = Math.random() * w; g.beginPath(); g.moveTo(x, 0); g.bezierCurveTo(x + 4, h * .3, x - 4, h * .7, x + 2, h); g.stroke(); } },
+  leather: (g, w, h) => { g.fillStyle = '#999'; g.fillRect(0, 0, w, h); noiseDots(g, w, h, 1400, .2, 2); },
+};
+const WEAVE_TEX = {};
+function weave(kind) {
+  if (WEAVE_TEX[kind]) return WEAVE_TEX[kind];
+  const size = kind === 'nylon' ? 64 : 128, rep = kind === 'nylon' ? [1, 7] : kind === 'hair' ? [3, 1] : [3, 3];
+  const hc = canvasOf(size, size, WEAVES[kind]);
+  // colour map: the same pattern pulled up near white so the material colour carries the hue
+  const cc = canvasOf(size, size, (g, w, h) => { g.drawImage(hc, 0, 0); g.fillStyle = kind === 'nylon' ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.78)'; g.fillRect(0, 0, w, h); });
+  return WEAVE_TEX[kind] = { map: texFrom(cc, rep), normal: heightToNormal(hc, kind === 'nylon' ? 2.2 : kind === 'denim' ? 1.6 : 1.1, rep) };
+}
+const CLOTH_R = { denim: .88, knit: .96, wool: .9, cotton: .82, nylon: .32, skin: .48, hair: .38, leather: .42 };
+const CLOTH = {};
+function cloth(color, kind) {   // a garment, skin or hair material with its weave
+  const k = kind + color;
+  if (CLOTH[k]) return CLOTH[k];
+  const w = weave(kind);
+  const m = new THREE.MeshStandardMaterial({ color, map: w.map, normalMap: w.normal, roughness: CLOTH_R[kind] ?? .8, metalness: kind === 'nylon' ? .05 : 0 });
+  m.normalScale.set(kind === 'skin' ? .25 : kind === 'hair' ? .8 : .6, kind === 'skin' ? .25 : kind === 'hair' ? .8 : .6);
+  m.color.convertSRGBToLinear();
+  return CLOTH[k] = m;
 }
 
 // ---- painted signage ----
@@ -2206,22 +2381,56 @@ function fpInit() {
   for (const z of [-.8, .8]) { const l = new T.Mesh(new T.BoxGeometry(10, .05, .35), new T.MeshBasicMaterial({ color: 0xffffff })); l.position.set(0, 2.2, z); es.add(l); }
   const pm = new T.PMREMGenerator(r); sc.environment = pm.fromScene(es, .04).texture; pm.dispose();
 
-  // two cheap lights plus the baked reflections; per-pixel point lights were the costliest part of the frame
-  sc.add(new T.HemisphereLight(0xfff8ee, 0x5c6166, .85));
-  const dl = new T.DirectionalLight(0xffffff, .45); dl.position.set(.5, 3, .3); sc.add(dl);
-
-  const steel = mat('#d7dbde', { metalness: .9, roughness: .22 });
-  const wallM = mat('#e5e7e4', { roughness: .45, metalness: .05 });
-  const rubber = mat('#1c1f22', { roughness: .9 });
-  const glass = new T.MeshStandardMaterial({ color: 0xcfe3ea, transparent: true, opacity: .13, roughness: .05, metalness: .2, depthWrite: false });
   const L0 = WX(X0), L1 = WX(X0 + 12 * CW), len = L1 - L0, cx = (L0 + L1) / 2;
+  // light: the two ceiling LED strips are real area lights; a soft key light from above casts the shadows
+  r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap;
+  FP.hemi = new T.HemisphereLight(0xfff8ee, 0x4c5156, .4); sc.add(FP.hemi);
+  const sun = FP.sun = new T.DirectionalLight(0xfff6ea, .35);
+  sun.position.set(.6, 6, 1.2); sun.castShadow = true;
+  Object.assign(sun.shadow.camera, { left: -4.4, right: 4.4, top: 2.6, bottom: -2.6, near: .5, far: 12 });
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0004; sun.shadow.normalBias = .025;
+  sc.add(sun);
+  FP.areas = [];
+  if (T.RectAreaLightUniformsLib) {
+    T.RectAreaLightUniformsLib.init();
+    for (const z of [-.72, .72]) {
+      const a = new T.RectAreaLight(0xfff4e4, 2.6, len - .4, .16);
+      a.position.set(cx, 2.35, z); a.lookAt(cx, 0, z); sc.add(a); FP.areas.push(a);
+    }
+  } else FP.hemi.intensity = .8;
+  // tunnel lamps sweeping past the windows throw warm light across the carriage
+  FP.sweep = [-1, 1].map(sg => { const l = new T.PointLight(0xffc98a, 0, 3.6, 2); l.position.set(0, 1.45, sg * (ZW + .2)); sc.add(l); return l; });
 
-  // floor: speckled grey vinyl, stainless kick plates at the doors
-  const floorTex = paint(512, 512, (g, w, h) => {
-    g.fillStyle = '#8c918f'; g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 9000; i++) { g.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.14)'; const s = Math.random() * 2 + .5; g.fillRect(Math.random() * w, Math.random() * h, s, s); }
-  }, [len / 1.3, ZW * 2 / 1.3]);
-  FP.floor = mesh(U.box(), new T.MeshStandardMaterial({ map: floorTex, roughness: .72 }), sc, cx, -.01, 0, len, .02, ZW * 2);
+  // surfaces
+  const brushed = canvasOf(256, 256, (g, w, h) => {
+    g.fillStyle = '#c9cdd0'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 700; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,64,68'},${Math.random() * .06})`; g.fillRect(0, Math.random() * h, w, Math.random() * .8); }
+  });
+  const steel = new T.MeshStandardMaterial({ color: 0xdfe3e6, map: texFrom(brushed, [2, 2]), roughnessMap: texFrom(brushed, [2, 2], false), roughness: .42, metalness: .95 });
+  const lam = canvasOf(256, 256, (g, w, h) => { g.fillStyle = '#e6e8e4'; g.fillRect(0, 0, w, h); noiseDots(g, w, h, 3000, .05, 1.5); });
+  const wallM = new T.MeshStandardMaterial({ color: 0xffffff, map: texFrom(lam, [3, 2]), normalMap: heightToNormal(lam, .6, [3, 2]), roughness: .4, metalness: .04 });
+  const rubber = mat('#1c1f22', { roughness: .9 });
+  const glass = new T.MeshStandardMaterial({ color: 0xcfe3ea, transparent: true, opacity: .2, roughness: .03, metalness: .3, envMapIntensity: 1.6, depthWrite: false });
+  FP.noCast = new Set([wallM, glass]);
+
+  // floor: speckled grey vinyl, worn lighter down the aisle, scuffed; stainless kick plates at the doors
+  const floorC = canvasOf(1024, 1024, (g, w, h) => {
+    g.fillStyle = '#868b89'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 40; i++) { const gr = g.createRadialGradient(Math.random() * w, Math.random() * h, 0, Math.random() * w, Math.random() * h, 120 + Math.random() * 160); gr.addColorStop(0, `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},.05)`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+    for (let i = 0; i < 26000; i++) { g.fillStyle = pick(['rgba(255,255,255,.22)', 'rgba(0,0,0,.18)', 'rgba(70,80,90,.25)', 'rgba(200,190,170,.18)']); const s = Math.random() * 2.4 + .4; g.fillRect(Math.random() * w, Math.random() * h, s, s); }
+    for (let i = 0; i < 90; i++) { g.strokeStyle = 'rgba(30,30,30,.12)'; g.lineWidth = 1 + Math.random() * 2; const x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.arc(x, y, 8 + Math.random() * 30, Math.random() * 6, Math.random() * 6 + 1); g.stroke(); }
+  });
+  const floorRough = canvasOf(512, 512, (g, w, h) => { g.fillStyle = '#b8b8b8'; g.fillRect(0, 0, w, h); for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(40,40,40,.2)'; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 4 + Math.random() * 10, Math.random() * 3, 0, 7); g.fill(); } });
+  const fr = [len / 2.2, ZW * 2 / 2.2];
+  FP.floor = mesh(U.box(), new T.MeshStandardMaterial({ map: texFrom(floorC, fr), roughnessMap: texFrom(floorRough, fr, false), normalMap: heightToNormal(canvasOf(512, 512, g => g.drawImage(floorC, 0, 0, 512, 512)), .9, fr), normalScale: new T.Vector2(.35, .35), roughness: .82 }), sc, cx, -.01, 0, len, .02, ZW * 2);
+  FP.floor.receiveShadow = true;
+  // contact shadow along the front of each bench and the foot of the walls, where light never quite reaches
+  const aoTex = texFrom(canvasOf(8, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }), null, false);
+  const aoM = new T.MeshBasicMaterial({ map: aoTex, transparent: true, depthWrite: false });
+  for (const sg of [-1, 1]) {
+    const ao = mesh(U.plane(), aoM, sc, cx, .002, sg * (ZW - .62), len, .34, 1);
+    ao.rotation.set(-Math.PI / 2, 0, sg > 0 ? Math.PI : 0);
+  }
   const wetM = new T.MeshStandardMaterial({ color: 0x3e4a54, roughness: .06, metalness: .2, transparent: true, opacity: .45, depthWrite: false });
   FP.wet = [];
   for (const dc of DOORS) for (const sg of [-1, 1]) {
@@ -2232,7 +2441,9 @@ function fpInit() {
   }
 
   // ceiling: flat centre with LED strips, sloped sides
-  const ceil = mat('#f1f2ef', { roughness: .55 });
+  const ceilC = canvasOf(256, 256, (g, w, h) => { g.fillStyle = '#eff0ec'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(0,0,0,.08)'; for (let x = 4; x < w; x += 8) for (let y = 4; y < h; y += 8) g.fillRect(x, y, 2, 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, 0, w, 2); });
+  const ceil = new T.MeshStandardMaterial({ map: texFrom(ceilC, [len / .9, 2]), roughness: .6 });
+  FP.noCast.add(ceil);
   mesh(U.box(), ceil, sc, cx, 2.38, 0, len, .02, 1.8);
   for (const sg of [-1, 1]) mesh(U.box(), ceil, sc, cx, 2.21, sg * 1.375, len, .02, 1.02).rotation.x = sg * .325;
   const led = new T.MeshBasicMaterial({ color: 0xfffdf6, toneMapped: false });
@@ -2318,7 +2529,19 @@ function fpInit() {
   }
 
   // benches: stainless base, fabric cushions with a rolled front edge, backrests
-  const fab = { reg: fabric('#3f6fa6', '#35608f'), prio: fabric('#c24550', '#a63a44'), pink: fabric('#e27ca6', '#c9668f') };
+  // seat moquette: a small repeating motif woven into the cloth, with real pile under the light
+  const moq = (base, dark, light) => {
+    const c = canvasOf(256, 256, (g, w, h) => {
+      g.fillStyle = base; g.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 32) for (let x = (y / 32) % 2 ? 16 : 0; x < w; x += 32) {
+        g.fillStyle = dark; g.beginPath(); g.moveTo(x + 16, y + 4); g.lineTo(x + 28, y + 16); g.lineTo(x + 16, y + 28); g.lineTo(x + 4, y + 16); g.closePath(); g.fill();
+        g.fillStyle = light; g.fillRect(x + 14, y + 14, 4, 4);
+      }
+      noiseDots(g, w, h, 9000, .09);
+    });
+    return { map: texFrom(c, [1.5, 1.5]), normal: heightToNormal(canvasOf(256, 256, (g, w, h) => { g.drawImage(c, 0, 0); noiseDots(g, w, h, 20000, .25); }), 1.2, [1.5, 1.5]) };
+  };
+  const fab = { reg: moq('#35649a', '#2a5283', '#6d9bd0'), prio: moq('#b83c48', '#962f3a', '#e5848d'), pink: moq('#d9719d', '#bf5b86', '#f4b6cf') };
   const pinkEmblem = paint(256, 256, (g, w, h) => {
     g.fillStyle = '#f7a8c6'; g.fillRect(0, 0, w, h);
     g.fillStyle = '#fff'; g.beginPath(); g.arc(128, 70, 24, 0, 7); g.fill();
@@ -2331,7 +2554,7 @@ function fpInit() {
     mesh(U.box(), mat('#2c3136', { roughness: .8 }), sc, (a + b) / 2, .2, sg * (ZW - .47), b - a - .04, .3, .01);   // heater panel
   }
   for (const s of SEATS) {
-    const sg = s.side ? 1 : -1, x = WX(s.x), cm = new T.MeshStandardMaterial({ map: fab[s.type], roughness: .92 });
+    const sg = s.side ? 1 : -1, x = WX(s.x), cm = new T.MeshStandardMaterial({ map: fab[s.type].map, normalMap: fab[s.type].normal, roughness: .95 });
     s.m3 = mesh(U.box(), cm, sc, x, .43, sg * (ZW - .27), .56, .09, .44);
     mesh(U.cyl(), cm, sc, x, .43, sg * (ZW - .49), .045, .56, .045).rotation.z = Math.PI / 2;
     s.m3.userData.seat = s;
@@ -2359,11 +2582,20 @@ function fpInit() {
     }
   }
   FP.shadowMat = new T.MeshBasicMaterial({
-    map: paint(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(0,0,0,.45)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }),
+    map: paint(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(0,0,0,.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }),
     transparent: true, depthWrite: false,
   });
 
   mergeStatic(sc, new Set([FP.floor, ...SEATS.map(s => s.m3), ...FP.lamps.map(l => l.lamp), ...FP.wet]));
+  // seats, poles, racks and benches throw shadows; the shell of the car only receives them
+  sc.traverse(o => {
+    if (!o.isMesh) return;
+    const m = o.material, solid = !m.transparent && !m.isMeshBasicMaterial;
+    o.receiveShadow = solid;
+    o.castShadow = solid && !FP.noCast.has(m) && o !== FP.floor;
+  });
+  fpSetupPost();
+  applyGfx(SAVE.gfx || 'high', true);
   FP.ray = new T.Raycaster();
   FP.pickables = [FP.floor, ...SEATS.map(s => s.m3)];
   FP.dir = new T.Vector3(); FP.v = new T.Vector3(); FP.v2 = new T.Vector3();
@@ -2459,13 +2691,65 @@ function mergeStatic(sc, keep) {
     sc.add(merged);
   }
 }
-// drop the render resolution when frames run long, raise it again when there is headroom
+// the camera: bloom on the light sources, a filmic tone curve, a slight subway colour grade, vignette, grain, FXAA
+function fpSetupPost() {
+  const T = THREE;
+  if (!T.EffectComposer || !T.RenderPass || !T.ShaderPass || !T.UnrealBloomPass) return;
+  try {
+    const comp = new T.EffectComposer(FP.renderer);
+    comp.addPass(new T.RenderPass(FP.scene, FP.cam));
+    FP.bloom = new T.UnrealBloomPass(new T.Vector2(512, 288), .26, .45, .92);
+    comp.addPass(FP.bloom);
+    FP.grade = new T.ShaderPass({
+      uniforms: { tDiffuse: { value: null }, time: { value: 0 }, exposure: { value: .9 }, vig: { value: .34 }, grain: { value: .03 }, ca: { value: .0018 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `
+        uniform sampler2D tDiffuse; uniform float time, exposure, vig, grain, ca; varying vec2 vUv;
+        vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+        float rnd(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
+        void main(){
+          vec2 dir = vUv - .5; float d = length(dir);
+          vec3 col = vec3(texture2D(tDiffuse, vUv + dir * ca).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - dir * ca).b);
+          col = aces(col * exposure);
+          float l = dot(col, vec3(.2126, .7152, .0722));
+          col *= mix(vec3(.95, 1.0, 1.04), vec3(1.03, 1.0, .96), smoothstep(.15, .85, l));   // cool shadows, warm highlights
+          col = pow(col, vec3(1. / 2.2));
+          col *= 1. - vig * smoothstep(.32, .86, d);
+          col += (rnd(vUv * 731. + time) - .5) * grain;
+          gl_FragColor = vec4(col, 1.);
+        }`,
+    });
+    comp.addPass(FP.grade);
+    if (T.FXAAShader) { FP.fxaa = new T.ShaderPass(T.FXAAShader); comp.addPass(FP.fxaa); }
+    FP.composer = comp;
+  } catch (e) { FP.composer = null; }
+}
+// 높음: shadows + area lights + camera pass · 보통: shadows + area lights · 낮음: plain lighting, no shadows
+function applyGfx(level, quiet) {
+  const T = THREE, r = FP.renderer, hi = level === 'high' && !!FP.composer, lo = level === 'low';
+  FP.gfx = level; SAVE.gfx = level; persist();
+  r.shadowMap.enabled = !lo; FP.sun.castShadow = !lo;
+  const ms = level === 'high' ? 2048 : 1024;
+  if (FP.sun.shadow.mapSize.x !== ms) { FP.sun.shadow.mapSize.set(ms, ms); if (FP.sun.shadow.map) { FP.sun.shadow.map.dispose(); FP.sun.shadow.map = null; } }
+  for (const a of FP.areas) a.visible = !lo;
+  FP.hemi.intensity = lo || !FP.areas.length ? .8 : .4;
+  FP.sun.intensity = lo ? .5 : .35;
+  r.toneMapping = hi ? T.NoToneMapping : T.ACESFilmicToneMapping;   // with the camera pass the tone curve happens there
+  FP.usePost = hi;
+  FP.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
+  $('#t-gfx').textContent = '그래픽 ' + ({ high: '높음', mid: '보통', low: '낮음' })[level];
+  if (!quiet) toast('그래픽 품질: ' + ({ high: '높음 · 그림자 + 조명 효과', mid: '보통 · 그림자', low: '낮음 · 가볍게' })[level]);
+  fpResize();
+}
+// drop the render resolution when frames run long, then the quality level; raise resolution again when there is headroom
 function fpAdapt(dt) {
   if (!dt) return;
   FP.ema = FP.ema * .92 + dt * .08;
-  if (FP.ema > 1 / 45) { FP.slowT += dt; FP.fastT = 0; } else if (FP.ema < 1 / 70) { FP.fastT += dt; FP.slowT = 0; } else { FP.slowT = FP.fastT = 0; }
+  // only a real slowdown counts: a browser or screen capped at 30 fps is not a reason to drop quality
+  if (FP.ema > 1 / 26) { FP.slowT += dt; FP.fastT = 0; } else if (FP.ema < 1 / 55) { FP.fastT += dt; FP.slowT = 0; } else { FP.slowT = FP.fastT = 0; }
   let pr = FP.pr;
-  if (FP.slowT > .8 && pr > .6) pr = Math.max(.6, pr - .15);
+  if (FP.slowT > 1.5 && pr > .85) pr = Math.max(.85, pr - .15);
+  else if (FP.slowT > 1.5 && FP.gfx !== 'low') { FP.slowT = 0; applyGfx(FP.gfx === 'high' ? 'mid' : 'low'); return; }
   else if (FP.fastT > 4 && pr < FP.prMax) pr = Math.min(FP.prMax, pr + .1);
   if (pr !== FP.pr) { FP.pr = pr; FP.slowT = FP.fastT = 0; FP.renderer.setPixelRatio(pr); fpResize(); }
 }
@@ -2474,8 +2758,13 @@ function fpResize() {
   if (!w || !h) return;
   FP.renderer.setSize(w, h, false);
   FP.cam.aspect = w / h; FP.cam.updateProjectionMatrix();
+  if (FP.composer) {
+    FP.composer.setPixelRatio(FP.pr); FP.composer.setSize(w, h);
+    if (FP.fxaa) FP.fxaa.uniforms.resolution.value.set(1 / (w * FP.pr), 1 / (h * FP.pr));
+  }
 }
 function fpPick(e) {   // e = null: whatever the crosshair is on
+  if (TALK.who) return;
   const rect = FP.renderer.domElement.getBoundingClientRect();
   const v = e ? new THREE.Vector2((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1) : new THREE.Vector2(0, 0);
   FP.ray.setFromCamera(v, FP.cam);
@@ -2498,9 +2787,13 @@ function person3D(p) {
   const T = THREE, L = p.look, root = new T.Group(), B = new T.Group();
   root.add(B);
   const hs = L.hs || 1; B.scale.setScalar(hs);
-  const skin = mat(L.skin, { roughness: .62 }), hair = mat(L.hair || '#222', { roughness: .5 });
-  const coat = p.kind === 'ajumma' ? floral(L.coat) : L.padding ? quilted(L.coat) : mat(L.coat, { roughness: .85 });
-  const pants = mat(L.pants, { roughness: .8 }), shoe = mat(L.shoe || '#1b1d20', { roughness: .45 });
+  // what each part is made of
+  const skin = cloth(L.skin, 'skin'), hair = cloth(L.hair || '#222', 'hair');
+  const coatKind = L.padding || p.kind === 'hunter' ? 'nylon' : ['office', 'elder', 'parent'].includes(p.kind) && !L.short ? 'wool' : p.kind === 'pregnant' ? 'knit' : 'cotton';
+  const coat = p.kind === 'ajumma' ? floral(L.coat) : cloth(L.coat, coatKind);
+  const pants = cloth(L.pants, L.jeans ? 'denim' : p.kind === 'office' ? 'wool' : 'cotton');
+  const shoe = cloth(L.shoe || '#1b1d20', 'leather'), sole = mat('#151617', { roughness: .7 });
+  const lipC = L.fem ? '#b9575c' : '#a3615a';
   mesh(U.plane(), FP.shadowMat, root, 0, .006, 0, .8, .8, 1).rotation.x = -Math.PI / 2;
 
   const hips = new T.Group(); hips.position.y = .92; B.add(hips);
@@ -2508,10 +2801,12 @@ function person3D(p) {
   const legs = [], legM = L.skirt ? mat('#3b3330', { roughness: .45 }) : pants;
   for (const sx of [-1, 1]) {
     const hip = new T.Group(); hip.position.x = sx * .085; hips.add(hip);
-    mesh(U.limb(), legM, hip, 0, -.22, 0, .07, .44, .07);
+    mesh(U.limb(), legM, hip, 0, -.22, 0, .072, .44, .072);
+    mesh(U.sph(), legM, hip, 0, -.44, 0, .058, .05, .058);   // knee
     const knee = new T.Group(); knee.position.y = -.44; hip.add(knee);
-    mesh(U.limb(), L.shorts ? skin : legM, knee, 0, -.2, 0, .055, .41, .055);
-    mesh(U.sph(), shoe, knee, 0, -.425, .04, .052, .042, .125);
+    mesh(U.limb(), L.shorts ? skin : legM, knee, 0, -.2, 0, .056, .41, .056);
+    mesh(U.sph(), shoe, knee, 0, -.41, .045, .052, .045, .125);   // shoe upper
+    mesh(U.box(), sole, knee, 0, -.447, .045, .09, .018, .24);    // sole
     legs.push({ hip, knee });
   }
   const torso = new T.Group(); torso.position.y = .92; B.add(torso);
@@ -2519,75 +2814,93 @@ function person3D(p) {
   mesh(L.fem ? U.torsoF() : U.torsoM(), coat, torso, 0, 0, 0, pad, 1, .64 * pad);
   if (L.skirt) mesh(U.skirt(), mat(L.pants, { roughness: .85, side: T.DoubleSide }), torso, 0, -.2, 0, 1, 1, .72);
   else if (L.long) {
-    const tm = L.padding ? quilted(L.coat) : mat(L.coat, { roughness: .85 });
-    const tail = mesh(U.tail(), tm, torso, 0, L.padding ? -.3 : -.17, 0, pad, L.padding ? 1.7 : 1, .72 * pad);
-    tail.material = tm.clone(); tail.material.side = T.DoubleSide;
+    const tm = cloth(L.coat, coatKind).clone(); tm.side = T.DoubleSide;
+    mesh(U.tail(), tm, torso, 0, L.padding ? -.3 : -.17, 0, pad, L.padding ? 1.7 : 1, .72 * pad);
   }
-  if (L.scarf) mesh(U.ring(), mat(L.scarf, { roughness: .9 }), torso, 0, .6, 0, .075, .075, .075).rotation.x = Math.PI / 2;
+  // garment details: lapels and a shirt for jackets, buttons, a zip, hoodie strings
+  const front = .64 * pad * .17;
+  if (coatKind === 'wool' && !L.padding) {
+    mesh(U.box(), mat('#f2f2ee', { roughness: .7 }), torso, 0, .45, front - .004, .09, .16, .01);
+    for (const sx of [-1, 1]) { const lp = mesh(U.box(), coat, torso, sx * .045, .44, front + .002, .045, .2, .012); lp.rotation.z = sx * .32; }
+    for (const y of [.18, .28]) mesh(U.sph(), mat('#1c1c1c', { roughness: .4 }), torso, 0, y, front + .006, .011, .011, .006);
+  }
+  if (L.tie) mesh(U.box(), cloth(L.tie, 'cotton'), torso, 0, .34, front + .006, .04, .26, .01);
+  if (coatKind === 'nylon') mesh(U.box(), mat('#2a2c2e', { roughness: .35, metalness: .6 }), torso, 0, .28, front * 1.06, .008, .52, .006);
+  if (p.kind === 'student' || p.kind === 'gamer') {
+    mesh(U.hood(), coat, torso, 0, .55, -.06).rotation.x = -1.3;
+    for (const sx of [-1, 1]) mesh(U.cyl(), mat('#f0f0ee'), torso, sx * .035, .42, front + .004, .004, .14, .004);
+  }
+  if (L.scarf) mesh(U.ring(), cloth(L.scarf, 'knit'), torso, 0, .6, 0, .078, .078, .085).rotation.x = Math.PI / 2;
   let snow = null;
   if (p.snowT) { snow = new T.Group(); torso.add(snow); for (const [x, z] of [[-.13, -.02], [-.07, .05], [.1, -.03], [.15, .03], [.02, -.06]]) mesh(U.sph(), mat('#ffffff', { roughness: .9 }), snow, x, .54, z, .014, .01, .014); }
   if (p.kind === 'mom') {   // baby in a front carrier, diaper bag on the shoulder
-    const strap = mat('#4a4f57', { roughness: .8 });
+    const strap = cloth('#4a4f57', 'cotton');
     for (const sx of [-1, 1]) mesh(U.box(), strap, torso, sx * .09, .4, .1, .04, .3, .015);
-    mesh(U.sph(), mat(L.baby, { roughness: .9 }), torso, 0, .3, .17, .1, .12, .09);
+    mesh(U.sph(), cloth(L.baby, 'knit'), torso, 0, .3, .17, .1, .12, .09);
     const bh = new T.Group(); bh.position.set(0, .45, .18); torso.add(bh);
-    mesh(U.sph(), mat('#f3d2b3', { roughness: .6 }), bh, 0, 0, 0, .065, .07, .065);
-    mesh(U.cap(), mat(L.baby, { roughness: .9 }), bh, 0, .012, -.005, .07, .07, .07).rotation.x = -.4;
-    mesh(U.box(), mat(L.bag, { roughness: .7 }), torso, -.25, .1, 0, .1, .22, .26);
+    mesh(U.head(), cloth('#f3d2b3', 'skin'), bh, 0, 0, 0, .065, .07, .065);
+    mesh(U.cap(), cloth(L.baby, 'knit'), bh, 0, .012, -.005, .07, .07, .07).rotation.x = -.4;
+    mesh(U.box(), cloth(L.bag, 'cotton'), torso, -.25, .1, 0, .1, .22, .26);
   }
-  if (L.tie) { mesh(U.box(), mat('#f2f2ee'), torso, 0, .47, .1, .1, .13, .012); mesh(U.box(), mat(L.tie, { roughness: .5 }), torso, 0, .33, .106, .04, .28, .012); }
-  if (p.kind === 'student' || p.kind === 'gamer') { const hd = mesh(U.hood(), coat, torso, 0, .55, -.06); hd.rotation.x = -1.3; }
-  if (p.kind === 'hunter') mesh(U.box(), mat('#e8e8e8'), torso, 0, .3, .1, .012, .5, .01);
   if (p.kind === 'pregnant') {
     mesh(U.sph(), coat, torso, 0, .2, .07, .15, .16, .13);
     mesh(U.sph(), mat('#ff5fa2', { emissive: '#ff2f86', emissiveIntensity: .6 }), torso, .11, .42, .1, .026, .026, .012);
   }
   if (L.backpack) {
-    const bp = mat(L.backpack, { roughness: .7 });
+    const bp = cloth(L.backpack, 'nylon');
     mesh(U.box(), bp, torso, 0, .3, -.17, .3, .36, .14);
-    for (const sx of [-1, 1]) mesh(U.box(), bp, torso, sx * .1, .42, .095, .035, .2, .012);
+    mesh(U.box(), bp, torso, 0, .2, -.245, .24, .14, .03);   // front pocket
+    for (const sx of [-1, 1]) mesh(U.box(), bp, torso, sx * .1, .42, front + .002, .035, .2, .012);
   }
   let bag = null;
   if (p.kind === 'ajumma') {
     bag = new T.Group(); bag.position.set(-.24, .08, .03); torso.add(bag);
-    mesh(U.box(), mat(L.handbag, { roughness: .4 }), bag, 0, 0, 0, .1, .2, .28);
-    mesh(U.ring(), mat(L.handbag, { roughness: .4 }), bag, 0, .14, 0, .08, .08, .08).rotation.y = Math.PI / 2;
+    mesh(U.box(), cloth(L.handbag, 'leather'), bag, 0, 0, 0, .1, .2, .28);
+    mesh(U.ring(), cloth(L.handbag, 'leather'), bag, 0, .14, 0, .08, .08, .08).rotation.y = Math.PI / 2;
+    mesh(U.box(), mat('#d9b24a', { metalness: .85, roughness: .3 }), bag, .052, .05, 0, .004, .025, .05);
   }
-  mesh(U.cyl(), skin, torso, 0, .62, 0, .045, .09, .045);
+  mesh(U.limb(), skin, torso, 0, .62, 0, .048, .1, .048);
+
+  // head: a proper skull shape, eyes with whites and irises (they blink), brows, nose, lips, ears
   const head = new T.Group(); head.position.y = .74; torso.add(head);
-  mesh(U.sph(), skin, head, 0, 0, 0, .092, .112, .102);
-  // small facial features only render up close (see fpRender)
-  const eye = mat('#141414', { roughness: .25 }), face = new T.Group(); head.add(face);
+  mesh(U.head(), skin, head, 0, 0, 0, .092, .112, .102);
+  mesh(U.head(), skin, head, 0, -.055, .025, .072, .05, .07);   // jaw and chin
+  const face = new T.Group(); head.add(face);
+  const eyes = new T.Group(); eyes.position.set(0, .018, 0); face.add(eyes);
+  const iris = L.kind === 'x' ? '#2a2a2a' : pick(['#2b1d14', '#3a2718', '#1c1410']);
   for (const sx of [-1, 1]) {
-    mesh(U.sph(), eye, face, sx * .034, .018, .09, .012, .01, .008);
-    mesh(U.box(), hair, face, sx * .035, .042, .094, .032, .007, .006);
-    mesh(U.sph(), skin, face, sx * .092, 0, -.005, .016, .03, .022);
+    mesh(U.sph(), mat('#f4f1ea', { roughness: .25 }), eyes, sx * .034, 0, .088, .016, .011, .008);
+    mesh(U.sph(), mat(iris, { roughness: .15 }), eyes, sx * .034, 0, .0955, .0085, .0085, .003);
+    const brow = mesh(U.box(), hair, face, sx * .035, .043, .095, .034, .007, .006); brow.rotation.z = sx * -.12;
+    mesh(U.sph(), skin, face, sx * .093, 0, -.004, .016, .031, .023);   // ears
   }
-  mesh(U.sph(), skin, face, 0, -.008, .1, .016, .026, .022);
-  if (L.mask) mesh(U.sph(), mat(L.mask, { roughness: .9 }), head, 0, -.043, .057, .084, .056, .058);
-  else mesh(U.box(), mat('#a0544a', { roughness: .6 }), face, 0, -.05, .093, .03, .005, .004);
+  const nose = mesh(geo('nose', () => new T.ConeGeometry(1, 1, 8)), skin, face, 0, -.008, .104, .015, .032, .02); nose.rotation.x = Math.PI / 2.3;
+  if (L.mask) mesh(U.sph(), cloth(L.mask, 'cotton'), head, 0, -.043, .057, .084, .056, .058);
+  else { mesh(U.sph(), mat(lipC, { roughness: .45 }), face, 0, -.05, .093, .021, .006, .008); }
   const st = L.hairStyle || 'short';
   if (L.cap) {
-    const cm = mat(L.cap, { roughness: .7 });
+    const cm = cloth(L.cap, 'cotton');
     mesh(U.cap(), cm, head, 0, .03, -.005, .108, .1, .115).rotation.x = -.15;
     mesh(U.brim(), cm, head, 0, .045, .03, .1, .01, .1);
   } else if (st === 'bald') mesh(U.band(), hair, head, 0, .005, -.005, .1, .118, .108);
   else if (st === 'perm') {
     mesh(U.cap(), hair, head, 0, .01, -.012, .112, .126, .118).rotation.x = -.28;
-    for (let i = 0; i < 18; i++) {
-      const a = i / 18 * Math.PI * 2, b = .3 + (i % 3) * .28;
+    for (let i = 0; i < 22; i++) {
+      const a = i / 22 * Math.PI * 2, b = .25 + (i % 3) * .26;
       if (Math.sin(a) > .55) continue;   // keep the face clear
-      mesh(U.sph(), hair, head, Math.cos(a) * .1 * Math.cos(b), .03 + Math.sin(b) * .09, Math.sin(a) * .1 * Math.cos(b) - .015, .036, .036, .036);
+      mesh(U.sph(), hair, head, Math.cos(a) * .1 * Math.cos(b), .03 + Math.sin(b) * .09, Math.sin(a) * .1 * Math.cos(b) - .015, .034, .034, .034);
     }
-  } else if (st === 'bob') mesh(U.bob(), hair, head, 0, .012, -.014, .104, .125, .114).rotation.x = -.42;
-  else {
+  } else if (st === 'bob') {
+    mesh(U.bob(), hair, head, 0, .012, -.014, .104, .125, .114).rotation.x = -.42;
+    mesh(U.box(), hair, head, 0, .07, .085, .15, .03, .03).rotation.x = .3;   // fringe
+  } else {
     mesh(U.cap(), hair, head, 0, .012, -.012, .1, .122, .112).rotation.x = -.32;
     if (st === 'long') { mesh(U.box(), hair, head, 0, -.14, -.075, .18, .3, .06); for (const sx of [-1, 1]) mesh(U.box(), hair, head, sx * .09, -.07, -.01, .03, .2, .08); }
     if (st === 'pony') { mesh(U.sph(), hair, head, 0, .02, -.115, .045, .045, .045); mesh(U.cyl(), hair, head, 0, -.07, -.125, .025, .15, .025); }
     if (st === 'side') mesh(U.box(), hair, head, .03, .088, .07, .1, .025, .04).rotation.z = .2;
   }
-  if (L.beanie) { const bm = mat(L.beanie, { roughness: .95 }); mesh(U.cap(), bm, head, 0, .02, -.01, .108, .13, .118).rotation.x = -.2; mesh(U.sph(), mat('#f2eee6', { roughness: .95 }), head, 0, .135, -.02, .03, .03, .03); }
-  if (L.hat) { const hm = mat(L.hat, { roughness: .8 }); mesh(U.sph(), hm, head, 0, .078, 0, .11, .05, .12); mesh(U.brim(), hm, head, 0, .068, .03, .1, .01, .09); }
+  if (L.beanie) { const bm = cloth(L.beanie, 'knit'); mesh(U.cap(), bm, head, 0, .02, -.01, .108, .13, .118).rotation.x = -.2; mesh(U.sph(), cloth('#f2eee6', 'knit'), head, 0, .135, -.02, .03, .03, .03); }
+  if (L.hat) { const hm = cloth(L.hat, 'wool'); mesh(U.sph(), hm, head, 0, .078, 0, .11, .05, .12); mesh(U.brim(), hm, head, 0, .068, .03, .1, .01, .09); }
   if (L.visor) {
     const vm = mat(L.visor, { roughness: .4 });
     mesh(U.brim(), vm, head, 0, .052, .02, .118, .008, .12);
@@ -2596,15 +2909,19 @@ function person3D(p) {
   let buds = null;
   if (p.kind === 'student') { buds = new T.Group(); head.add(buds); for (const sx of [-1, 1]) mesh(U.sph(), mat('#f5f5f5', { roughness: .3 }), buds, sx * .1, -.005, .01, .013, .013, .013); }
 
+  // arms with a cuff at the wrist and a hand with a thumb
   const arms = [];
   for (const sx of [-1, 1]) {
     const sh = new T.Group(); sh.position.set(sx * (L.fem ? .165 : .19), .5, 0); torso.add(sh);
-    mesh(U.sph(), coat, sh, 0, 0, 0, .056, .056, .056);
-    mesh(U.limb(), coat, sh, 0, -.14, 0, .05, .28, .05);
+    mesh(U.sph(), coat, sh, 0, 0, 0, .058 * pad, .058, .058 * pad);
+    mesh(U.limb(), coat, sh, 0, -.14, 0, .05 * pad, .28, .05 * pad);
     const el = new T.Group(); el.position.y = -.28; sh.add(el);
+    mesh(U.sph(), coat, el, 0, 0, 0, .046 * pad, .046, .046 * pad);
     mesh(U.limb(), L.short ? skin : coat, el, 0, -.12, 0, .043, .25, .043);
+    if (!L.short) mesh(U.cyl(), coat, el, 0, -.245, 0, .046, .025, .046);
     const hand = new T.Group(); hand.position.y = -.27; el.add(hand);
-    mesh(U.sph(), skin, hand, 0, -.02, 0, .034, .048, .026);
+    mesh(U.sph(), skin, hand, 0, -.025, 0, .032, .05, .02);
+    mesh(U.sph(), skin, hand, sx * -.024, -.01, .012, .011, .025, .011);   // thumb
     arms.push({ sh, el, hand });
   }
   const R = arms[1].hand, Lh = arms[0].hand;
@@ -2615,38 +2932,80 @@ function person3D(p) {
     mesh(U.plane(), new T.MeshBasicMaterial({ color: 0x9fd8ff, toneMapped: false }), phone, 0, 0, .0055, .062, .128, 1);
     phone.rotation.x = -1.35;
   }
-  if (p.kind === 'elder') { cane = mesh(U.cyl(), mat('#5b3d24', { roughness: .5 }), R, 0, -.41, .02, .012, .82, .012); }
+  if (p.kind === 'elder') { cane = mesh(U.cyl(), cloth('#5b3d24', 'leather'), R, 0, -.41, .02, .012, .82, .012); }
   if (p.kind === 'shopper') {
-    mesh(U.box(), mat(L.bag, { roughness: .7 }), R, 0, -.2, 0, .1, .3, .24);
-    mesh(U.box(), mat(L.bag2, { roughness: .7 }), Lh, 0, -.18, 0, .1, .26, .22);
+    mesh(U.box(), cloth(L.bag, 'cotton'), R, 0, -.2, 0, .1, .3, .24);
+    mesh(U.box(), cloth(L.bag2, 'cotton'), Lh, 0, -.18, 0, .1, .26, .22);
   }
-  if (L.brief) mesh(U.box(), mat('#2a1d16', { roughness: .45 }), Lh, 0, -.17, 0, .08, .28, .38);
+  if (L.brief) mesh(U.box(), cloth('#2a1d16', 'leather'), Lh, 0, -.17, 0, .08, .28, .38);
   if (L.umbrella && !L.brief && p.kind !== 'shopper') {   // folded umbrella, hooked handle in the hand
-    const um = mat(L.umbrella, { roughness: .6 });
     mesh(U.cyl(), mat('#8a8f94', { metalness: .7, roughness: .3 }), Lh, 0, -.38, 0, .008, .7, .008);
-    mesh(geo('ucone', () => new T.ConeGeometry(1, 1, 10)), um, Lh, 0, -.5, 0, .04, .5, .04).rotation.x = Math.PI;
-    mesh(geo('hook', () => new T.TorusGeometry(.035, .01, 6, 12, Math.PI)), mat('#3a2d24', { roughness: .5 }), Lh, 0, -.02, 0);
+    mesh(geo('ucone', () => new T.ConeGeometry(1, 1, 10)), cloth(L.umbrella, 'nylon'), Lh, 0, -.5, 0, .04, .5, .04).rotation.x = Math.PI;
+    mesh(geo('hook', () => new T.TorusGeometry(.035, .01, 6, 12, Math.PI)), cloth('#3a2d24', 'leather'), Lh, 0, -.02, 0);
   }
   let fan = null;
   if (L.fan) { fan = new T.Group(); fan.position.set(0, -.05, .02); R.add(fan); mesh(geo('fan', () => new T.CylinderGeometry(.11, .11, .004, 16, 1, false, 0, Math.PI)), mat(L.fan, { roughness: .8, side: T.DoubleSide }), fan, 0, -.06, 0).rotation.x = Math.PI / 2; }
   if (p.kind === 'wheel') {   // wheelchair: two big wheels, seat, backrest, footplate, push handles
     const wc = new T.Group(); root.add(wc);
-    const frame = mat('#9aa1a8', { metalness: .8, roughness: .3 }), tyre = mat('#1b1d20', { roughness: .8 });
+    const frame = mat('#9aa1a8', { metalness: .85, roughness: .3 }), tyre = mat('#1b1d20', { roughness: .8 });
     for (const sx of [-1, 1]) {
       mesh(geo('wheel', () => new T.TorusGeometry(.28, .022, 8, 28)), tyre, wc, sx * .3, .3, -.05).rotation.y = Math.PI / 2;
       mesh(geo('rim', () => new T.TorusGeometry(.25, .008, 6, 28)), frame, wc, sx * .32, .3, -.05).rotation.y = Math.PI / 2;
       mesh(U.sph(), tyre, wc, sx * .2, .05, .28, .05, .05, .03);
       mesh(U.cyl(), frame, wc, sx * .22, .85, -.24, .012, .5, .012);
     }
-    mesh(U.box(), mat('#2c3036', { roughness: .8 }), wc, 0, .48, 0, .46, .05, .44);
-    mesh(U.box(), mat('#2c3036', { roughness: .8 }), wc, 0, .75, -.23, .44, .4, .03);
+    mesh(U.box(), cloth('#2c3036', 'nylon'), wc, 0, .48, 0, .46, .05, .44);
+    mesh(U.box(), cloth('#2c3036', 'nylon'), wc, 0, .75, -.23, .44, .4, .03);
     mesh(U.box(), frame, wc, 0, .1, .34, .36, .02, .12);
   }
-  if (p.kind === 'child') root.scale.setScalar(1);   // height already comes from hs
   p.usesPhone = !!phone && (p.kind === 'gamer' || Math.random() < .3);
   p.holdsStrap = !['child', 'elder', 'pregnant'].includes(p.kind) && Math.random() < .65;
-  root.userData = { B, hs, legs, arms, head, torso, bag, buds, phone, cane, fan, snow, face };
+  p.blinkAt = Math.random() * 4;
+  mergeParts(root, new Set([cane]));
+  root.traverse(o => { if (o.isMesh) o.castShadow = !o.material.transparent && !o.material.isMeshBasicMaterial; });
+  root.userData = { B, hs, legs, arms, head, torso, bag, buds, phone, cane, fan, snow, face, eyes };
   return root;
+}
+// inside every joint, fuse the pieces that share a material into one mesh: the detail stays, the draw calls don't multiply
+function mergeParts(root, keep) {
+  const T = THREE, v = new T.Vector3(), nm = new T.Matrix3();
+  const groups = [];
+  root.traverse(o => { if (!o.isMesh) groups.push(o); });
+  for (const grp of groups) {
+    const byMat = new Map();
+    for (const o of grp.children) {
+      if (!o.isMesh || keep.has(o) || o.children.length) continue;
+      if (!byMat.has(o.material)) byMat.set(o.material, []);
+      byMat.get(o.material).push(o);
+    }
+    for (const [m, list] of byMat) {
+      if (list.length < 2) continue;
+      let vc = 0, ic = 0;
+      for (const o of list) { o.updateMatrix(); const g = o.geometry; vc += g.attributes.position.count; ic += g.index ? g.index.count : g.attributes.position.count; }
+      const pos = new Float32Array(vc * 3), nor = new Float32Array(vc * 3), uv = new Float32Array(vc * 2), idx = new Uint32Array(ic);
+      let vo = 0, io = 0;
+      for (const o of list) {
+        const g = o.geometry, pa = g.attributes.position, na = g.attributes.normal, ua = g.attributes.uv;
+        nm.getNormalMatrix(o.matrix);
+        for (let i = 0; i < pa.count; i++) {
+          v.fromBufferAttribute(pa, i).applyMatrix4(o.matrix); pos.set([v.x, v.y, v.z], (vo + i) * 3);
+          v.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); nor.set([v.x, v.y, v.z], (vo + i) * 3);
+          if (ua) { uv[(vo + i) * 2] = ua.getX(i); uv[(vo + i) * 2 + 1] = ua.getY(i); }
+        }
+        if (g.index) for (let i = 0; i < g.index.count; i++) idx[io + i] = g.index.getX(i) + vo;
+        else for (let i = 0; i < pa.count; i++) idx[io + i] = vo + i;
+        vo += pa.count; io += g.index ? g.index.count : pa.count;
+        grp.remove(o);
+      }
+      const bg = new T.BufferGeometry();
+      bg.setAttribute('position', new T.BufferAttribute(pos, 3));
+      bg.setAttribute('normal', new T.BufferAttribute(nor, 3));
+      bg.setAttribute('uv', new T.BufferAttribute(uv, 2));
+      bg.setIndex(new T.BufferAttribute(idx, 1));
+      bg.computeBoundingSphere();
+      grp.add(new T.Mesh(bg, m));
+    }
+  }
 }
 function posePerson(p, u) {
   const seated = p.state === 'seat' || p.kind === 'wheel', t = G.t, [La, Ra] = u.arms;
@@ -2683,7 +3042,10 @@ function posePerson(p, u) {
   if (u.cane) u.cane.visible = !seated;
   if (u.bag) u.bag.visible = !!p.hasBag;
   if (u.buds) u.buds.visible = !p.tell;
-  u.B.rotation.z = seated || RM ? 0 : G.lean * .012;
+  // small signs of life: blinking, a slow shift of weight, thumbs moving on a phone
+  if (u.eyes) u.eyes.scale.y = (t + p.blinkAt) % 4.2 < .12 && !(p.kind === 'sleeper' && seated) ? .1 : p.kind === 'sleeper' && seated ? .08 : 1;
+  if (onPhone) Ra.hand.rotation.x = Math.sin(t * 7 + p.id) * .08;
+  u.B.rotation.z = seated || RM ? 0 : G.lean * .012 + Math.sin(t * .55 + p.id * 2.3) * .01;
 }
 
 function fpRender(dt) {
@@ -2761,7 +3123,17 @@ function fpRender(dt) {
   FP.cam.position.set(WX(P.px + (seated ? 0 : G.lean * .6)) + sh, (seated ? 1.2 : 1.62) + bob + sh, eyeZ);
   FP.cam.rotation.set(FP.pitch, -FP.yaw, RM ? 0 : G.lean * .004, 'YXZ');
   FP.cam.updateMatrixWorld();
-  FP.renderer.render(FP.scene, FP.cam);
+  // tunnel lamps sweep through the windows while moving underground; platforms and open air brighten the car
+  const pa = platformAlpha(), od = outdoor(), dark = (1 - pa) * (1 - od), sweep = dark * clamp(G.v / 300, 0, 1);
+  const L0 = WX(X0), L1 = WX(X0 + 12 * CW), span = L1 - L0 + 2;
+  FP.sweep.forEach((l, i) => {
+    l.position.x = L1 + 1 - (((G.scroll / 100 + i * span * .5) % span) + span) % span;
+    l.intensity = FP.gfx === 'low' ? 0 : sweep * 2.2;
+  });
+  const lo = FP.gfx === 'low' || !FP.areas.length;
+  FP.hemi.intensity = (lo ? .8 : .4) + pa * .12 + od * (G.season === 'summer' && G.weather === 'clear' ? .35 : .18);
+  if (FP.usePost && FP.composer) { FP.grade.uniforms.time.value = G.t % 100; FP.composer.render(); }
+  else FP.renderer.render(FP.scene, FP.cam);
 
   // speech bubbles float over heads
   const host = $('#fp-bubbles'), w = host.clientWidth, h = host.clientHeight, v = FP.v;
@@ -2789,11 +3161,13 @@ function fpRender(dt) {
 
   $('#fp-press').style.opacity = seated ? clamp(P.pressure / PMAX, 0, 1) : 0;
   let hint = '';
-  if (live) {
+  if (live && !TALK.who) {
+    const tt = talkTarget(), talk = tt && !tt.talked ? ` · <b>T</b> ${KIND_NAME[tt.kind] || '승객'}에게 말 걸기` : '';
     if (P.tmpUntil > G.t && P.tmp) hint = P.tmp;
-    else if (seated) hint = prioNear() ? '<b>Space</b> 양보하기' : '<b>Space</b> 일어나기';
-    else if (SEATS.some(s => !s.occ && !s.claim && canReach(P, s))) hint = '<b>Space</b> 앉기';
-    else if (SEATS.some(s => !s.occ && s.claim && canReach(P, s))) hint = '👜 가방으로 찜한 자리';
+    else if (seated) hint = (prioNear() ? '<b>Space</b> 양보하기' : '<b>Space</b> 일어나기') + talk;
+    else if (SEATS.some(s => !s.occ && !s.claim && canReach(P, s))) hint = '<b>Space</b> 앉기' + talk;
+    else if (SEATS.some(s => !s.occ && s.claim && canReach(P, s))) hint = '👜 가방으로 찜한 자리' + talk;
+    else if (talk) hint = talk.slice(3);
   }
   if (FP.hint !== hint) { FP.hint = hint; $('#fp-hint').innerHTML = hint; }
   const askLock = live && !FP.locked && !FP.noLock && !G.paused && matchMedia('(pointer: fine)').matches;
@@ -2807,7 +3181,7 @@ function setView(fp) {
   scr.classList.toggle('fpmode', fp);
   scr.classList.toggle('nomap', fp && !FP.map);
   $('#t-view').textContent = fp ? '위에서 보기' : '1인칭 시점';
-  $('#t-map').hidden = !fp;
+  $('#t-map').hidden = !fp; $('#t-gfx').hidden = !fp;
   $('#t-map').textContent = FP.map ? '미니맵 끄기' : '미니맵 켜기';
   $('#b-tl').hidden = $('#b-tr').hidden = !fp;
   $('#keys-top').hidden = fp; $('#keys-fp').hidden = !fp;
@@ -2826,8 +3200,236 @@ function move(dir) {
 }
 function turn(d) { if (FP.on) FP.yawT = Math.round(FP.yaw / (Math.PI / 2)) * (Math.PI / 2) + d * Math.PI / 2; }
 
+/* ================= talking to passengers ================= */
+// Press T next to someone; pick one of three lines. Time runs at a quarter speed while you talk.
+const KIND_NAME = { office: '직장인', student: '대학생', elder: '어르신', shopper: '쇼핑객', sleeper: '조는 사람', gamer: '게이머', hunter: '등산복 아저씨',
+  ajumma: '아줌마', pregnant: '임산부', child: '아이', parent: '아이 부모', mom: '아기 엄마', wheel: '휠체어 이용자' };
+const KIND_ICON = { office: '👔', student: '🎒', elder: '👴', shopper: '🛍️', sleeper: '😴', gamer: '🎮', hunter: '🧢', ajumma: '👜', pregnant: '🤰', child: '🧒', parent: '🧑', mom: '👶', wheel: '♿' };
+const OPENERS = {
+  office: ['(이어폰 한쪽을 빼며) 네?', '…네?'], student: ['네? 저요?', '(화들짝) 네?'], elder: ['응? 뭐라고?', '뭐 물어볼 거 있어요?'],
+  shopper: ['네~?', '(쇼핑백을 고쳐 들며) 네?'], gamer: ['(게임 화면만 본다)', '…잠깐만요, 이것만 깨고요'], hunter: ['뭐요.', '(위아래로 훑어본다) 왜요.'],
+  ajumma: ['어머, 왜요~?', '응? 학생 왜~?'], pregnant: ['네?', '(배를 감싸며) 네?'], mom: ['네? (아기를 토닥이며)'], parent: ['네?'],
+  child: ['(엄마 뒤로 숨는다)'], sleeper: ['(쿨쿨…)', '(고개가 꾸벅)'], wheel: ['네, 말씀하세요.'],
+};
+const HONESTY = { hunter: 0, gamer: .9, sleeper: 0 };   // the hiking-jacket man never tells you where he gets off
+const PROMISE = { student: .65, office: .45, shopper: .55, elder: .6, pregnant: .6, mom: .3, gamer: .35, hunter: .05, ajumma: .15, parent: .4, wheel: .5 };
+const destName = d => d >= 99 ? '종점' : d > HOME ? '왕십리 지나서' : ST[d][0];
+const TALK = { who: null, opts: [], replyUntil: 0 };
+
+function talkTarget() {
+  if (P.dead || P.out) return null;
+  let best = null, bs = 1e9;
+  if (FP.on && FP.ready) {   // whoever the crosshair is on, within arm's length
+    FP.cam.getWorldDirection(FP.dir);
+    for (const p of G.people) {
+      if (p === P || p.out || p.dead) continue;
+      FP.v.set(WX(p.px), p.state === 'seat' ? 1.1 : 1.45 * (p.look.hs || 1), WZ(p.py)).sub(FP.cam.position);
+      const d = FP.v.length(); if (d > 2.3) continue;
+      const ang = Math.acos(clamp(FP.v.normalize().dot(FP.dir), -1, 1));
+      if (ang > .5) continue;
+      const sc = ang + d * .15;
+      if (sc < bs) { bs = sc; best = p; }
+    }
+    return best;
+  }
+  for (const p of G.people) {
+    if (p === P || p.out || p.dead) continue;
+    const d = Math.hypot(p.px - P.px, p.py - P.py);
+    if (d < 96 && d < bs) { bs = d; best = p; }
+  }
+  return best;
+}
+function askDest(p) {
+  if (p.kind === 'sleeper') return ['(드르렁…)', null];
+  const truthful = Math.random() < (HONESTY[p.kind] ?? .95);
+  let d = p.dest;
+  if (!truthful) { d = Math.min(HOME, G.st + 3 + rnd(6)); p.fakeDest = d; }   // a lie that looks like a fact
+  p.revealed = true; p.shownDest = d;
+  const next = G.st + 1;
+  if (p.kind === 'hunter' && !truthful) unlock('talk');
+  return [d === next && G.phase === 'travel' ? '이번 역에서 내려요.' : d >= 99 ? '종점까지 가요.' : d > HOME ? '왕십리 지나서 한참 가요.' : `${ST[d][0]}에서 내려요.`, null];
+}
+function talkOptions(p) {
+  const seatedMe = P.state === 'seat', mood = p.mood ?? (p.mood = .3 + Math.random() * .4);
+  const small = ['오늘 퇴근길 진짜 힘드시죠', () => { p.mood = Math.min(1, mood + .3); return [pick(['그러게요, 매일 이래요…', '하하, 그쵸. 오늘 유난히 사람 많네요', '에휴, 말도 마요']), null]; }];
+  // someone who needs a seat is standing in front of you
+  if (seatedMe && isPrio(p) && p.state === 'stand' && canReach(p, P.seat)) return [
+    ['여기 앉으세요', () => { playerYield(p, false); return ['어머, 고마워요', null]; }],
+    ['죄송해요, 제가 몸이 좀 안 좋아서요…', () => {
+      if (Math.random() < .5) { p.excusedUntil = G.t + 25; p.targetP = false; p.goal = chooseSpot(p); P.pressure = 0; return ['아이고, 그래요. 괜찮아요', null]; }
+      P.pressure += .9;
+      const b = G.people.find(n => n !== P && n.state === 'stand' && !isPrio(n) && Math.abs(n.c - P.c) <= 3);
+      if (b) { tmp(b, '멀쩡해 보이는데…', 1.8, 'alert'); b.stareAt = P; b.stareUntil = G.t + 4; }
+      return ['(말없이 쳐다본다)', 'alert'];
+    }],
+    ['저 다음 역에서 내려요', () => { p.liedAt = G.phase === 'travel' ? G.st + 1 : G.st + 2; p.excusedUntil = 1e9; P.pressure = 0; return ['아 네, 그럼 기다릴게요', null]; }],
+  ];
+  if (p.kind === 'sleeper' && p.state === 'seat') return [
+    ['저기요… (살짝 깨운다)', () => {
+      const r = Math.random();
+      if (r < .45) {   // they missed their stop and bolt at the next one
+        p.dest = G.phase === 'travel' ? G.st + 1 : G.st + 2; p.kind = 'office'; assignPlan(p);
+        if (G.phase === 'stop') standFromSeat(p, true);
+        unlock('talk'); return ['헉! 여기 어디예요? 내려야 돼요!', 'alert'];
+      }
+      if (r < .8) { p.mood = .1; return ['…왜 깨워요', 'alert']; }
+      return ['(드르렁… 계속 잔다)', null];
+    }],
+    ['(어깨를 톡톡 친다)', () => { p.poked = true; return Math.random() < .5 ? ['음냐… 5분만…', null] : ['(움찔하더니 다시 잔다)', null]; }],
+    ['(깨우지 않고 그냥 둔다)', () => ['(쿨쿨…)', null]],
+  ];
+  if (p.kind === 'wheel') return [
+    ['도와드릴까요?', () => { G.bonus += 3; floatText(P.px, P.py - 40, '매너 +', '#ffd76a'); return ['괜찮아요, 마음만 받을게요. 감사해요', null]; }],
+    ['어디서 내리세요?', () => askDest(p)],
+    ['(길을 비켜 드린다)', () => ['감사합니다', null]],
+  ];
+  if (p.kind === 'child') return [
+    ['안녕~', () => ['…안녕 (손을 흔든다)', null]],
+    ['몇 살이야?', () => [pick(['다섯 살!', '(손가락 네 개를 편다)']), null]],
+    ['(웃어 준다)', () => ['(배시시 웃는다)', null]],
+  ];
+  // a seated passenger you could inherit a seat from
+  if (!seatedMe && p.state === 'seat') return [
+    ['혹시 어디서 내리세요?', () => askDest(p)],
+    ['내리실 때 이 자리 저 주실 수 있을까요?', () => {
+      const ok = Math.random() < (PROMISE[p.kind] ?? .4) + (mood - .5) * .5;
+      if (ok) { p.promise = true; unlock('talk'); return [pick(['그래요, 내릴 때 말할게요', '네~ 이따 앉으세요', '알겠어요, 조금만 기다려요']), null]; }
+      p.mood = Math.max(0, mood - .2);
+      return [pick(['네? 그건 좀…', '(못 들은 척한다)', '제가 왜요?']), 'alert'];
+    }],
+    small,
+  ];
+  // someone standing: a rival for the next seat, or just in your way
+  const opts = [
+    ['혹시 어디서 내리세요?', () => askDest(p)],
+    small,
+  ];
+  if (p.kind === 'ajumma' && p.hasBag) opts.splice(1, 0, ['가방 던지시면 위험해요…', () => {
+    if (Math.random() < .35 + mood * .3) { p.calmUntil = G.t + 45; return ['어머, 호호. 알았어~ 안 던질게', null]; }
+    return ['내 가방 내가 던지는데 왜~', 'alert'];
+  }]);
+  else if (p.kind === 'hunter') opts.splice(1, 0, ['여기 제가 먼저 서 있었는데요', () => {
+    if (Math.random() < .5) { p.avoidUntil = G.t + 30; p.goal = chooseSpot(p); return ['…쳇, 알았어요', null]; }
+    p.letsPass = false; p.refused = true; return ['그래서요?', 'alert'];
+  }]);
+  else opts.splice(1, 0, ['잠깐 지나가도 될까요?', () => {
+    if (!p.letsPass && Math.random() < .5 + mood * .4) { p.letsPass = true; p.refused = false; return ['아, 네 지나가세요', null]; }
+    return p.letsPass ? ['네, 지나가세요', null] : ['저도 못 움직여요…', 'alert'];
+  }]);
+  return opts;
+}
+// custom = { line, opts, onIgnore } when the passenger starts the conversation
+function openTalk(p, custom) {
+  if (!p) { toast('말 걸 사람이 없어요 · 옆에 붙어서 T를 눌러요'); return; }
+  if (!custom && p.talked) { tmp(p, pick(['아까 얘기했잖아요', '…(이어폰을 다시 낀다)', '또 왜요?']), 1.4, 'soft'); return; }
+  const kind = p.kind === 'gamer' && Math.random() < .5 && !custom ? 'gamer' : p.kind;
+  TALK.who = p; TALK.opts = custom ? custom.opts : talkOptions(p); TALK.replyUntil = 0; TALK.onIgnore = custom ? custom.onIgnore : null;
+  $('#talk-who').textContent = `${KIND_ICON[kind] || '🙂'} ${KIND_NAME[kind] || '승객'}${custom ? ' · 당신에게 말을 겁니다' : ''}`;
+  $('#talk-line').textContent = custom ? custom.line : pick(OPENERS[kind] || ['네?']);
+  $('#talk-line').className = custom ? 'bad' : '';
+  if (custom) { tmp(p, custom.line.slice(0, 18), 2.4, 'alert'); p.stareAt = P; p.stareUntil = G.t + 3; Snd.note(); }
+  const box = $('#talk-opts'); box.innerHTML = '';
+  TALK.opts.forEach(([text], i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.innerHTML = `<kbd>${i + 1}</kbd><span></span>`; b.lastChild.textContent = text;
+    b.addEventListener('click', () => chooseTalk(i));
+    box.appendChild(b);
+  });
+  $('#talk').hidden = false;
+  if (!custom) tmp(P, '저기요', .8, 'soft');
+}
+function chooseTalk(i) {
+  const p = TALK.who, o = TALK.opts[i];
+  if (!p || !o || TALK.replyUntil) return;
+  TALK.onIgnore = null;
+  tmp(P, o[0].replace(/^\(|\)$/g, '').slice(0, 14), 1.2, 'soft');
+  const [reply, k] = o[1]() || ['…', null];
+  p.talked = true;
+  tmp(p, reply, 2.4, k || 'info');
+  $('#talk-line').textContent = reply; $('#talk-line').className = k === 'alert' ? 'bad' : 'good';
+  $('#talk-opts').innerHTML = '';
+  TALK.replyUntil = performance.now() + 1500;
+}
+function closeTalk(silent) {
+  const ignored = !silent && !TALK.replyUntil && TALK.onIgnore;   // walking away from someone who spoke to you counts as a no
+  TALK.who = null; TALK.replyUntil = 0; TALK.onIgnore = null; $('#talk').hidden = true;
+  if (ignored) ignored();
+}
+
+/* ---------- 배려석의 법칙: sit in a pink or priority seat and someone will say something ---------- */
+const JEERS = {
+  pink: ['임산부석이잖아요!', '어휴 진짜…', '양심 어디 갔어요?', '우우~', '사진 찍어서 올려야겠네', '일어나세요 좀!', '와… 대단하다', '저런 사람 꼭 있어'],
+  prio: ['젊은 사람이 거기 앉으면 어떡해!', '노약자석이에요!', '요즘 젊은 것들은…', '우우~', '어휴…', '일어나요 좀!', '부끄러운 줄 알아야지', '쯧쯧'],
+};
+function jeerWave(share) {
+  const t = P.seat ? P.seat.type : 'prio', lines = JEERS[t === 'pink' ? 'pink' : 'prio'];
+  for (const n of G.people) {
+    if (n === P || n.out || n.dead || n.kind === 'child' || n.kind === 'wheel' || (n.kind === 'sleeper' && n.state === 'seat')) continue;
+    if (Math.abs(n.c - P.c) > 5 || Math.random() > share) continue;
+    tmp(n, pick(lines), 1.6 + Math.random() * .6, 'alert');
+    n.stareAt = P; n.stareUntil = G.t + 3;
+  }
+}
+function jeer() {
+  G.jeerUntil = G.t + 9; G.jeerTick = 1.3; G.jeers = (G.jeers || 0) + 1;
+  P.pressure = Math.max(P.pressure, PMAX * .45);
+  jeerWave(.8); Snd.boo(); unlock('jeer');
+  toast('주변에서 야유가 쏟아진다!');
+}
+function seatWarnTick(dt) {
+  const s = P.seat;
+  if (!s || s.type === 'reg') return;
+  if (G.jeerUntil > G.t) {   // the booing keeps coming in waves
+    G.jeerTick -= dt;
+    if (G.jeerTick <= 0) { G.jeerTick = 1.3; jeerWave(.35); }
+    return;
+  }
+  if (G.jeerUntil) { G.jeerUntil = 0; G.seatWarnAt = G.t + 15; }   // still sitting there? round two
+  if (G.seatWarnAt == null || G.t < G.seatWarnAt || TALK.who) return;
+  G.seatWarnAt = null;
+  const near = G.people.filter(n => n !== P && !n.out && !n.dead && !['child', 'wheel', 'sleeper', 'gamer'].includes(n.kind) && Math.abs(n.c - s.c) <= 4)
+    .sort((a, b) => (a.state === 'stand' ? 0 : 1) - (b.state === 'stand' ? 0 : 1) || Math.abs(a.c - s.c) - Math.abs(b.c - s.c));
+  const sp = s.type === 'prio' ? near.find(n => n.kind === 'elder') || near[0] : near.find(n => n.kind === 'ajumma' || n.kind === 'pregnant') || near[0];
+  if (!sp) { G.seatWarnAt = G.t + 6; return; }
+  const again = G.jeers > 0;
+  if (s.type === 'pink') openTalk(sp, {
+    line: again ? '아직도 안 일어났어요? 거기 임산부석이라니까요' : pick(['저기요, 거기 임산부석이잖아요. 일어나세요', '임산부 배려석인 거 안 보여요? 비켜 주세요']),
+    opts: [
+      ['아, 죄송해요 (일어난다)', () => { playerStand(); return ['네~ 비워 두는 거예요', null]; }],
+      ['지금 임산부도 없는데요?', () => {
+        if (!again && Math.random() < .35) { G.seatWarnAt = G.t + 25; return ['…그래도 비워 두는 거예요', 'alert']; }
+        jeer(); return ['와, 말하는 것 좀 봐', 'alert'];
+      }],
+      ['(못 들은 척한다)', () => { jeer(); return ['저기요!! 말 안 들려요?', 'alert']; }],
+    ],
+    onIgnore: jeer,
+  });
+  else openTalk(sp, {
+    line: again ? '아직도 거기 앉아 있어? 노약자석이라니까' : sp.kind === 'elder' ? '젊은 양반, 거기 노약자석이야' : '거기 노약자석이에요. 어르신들 오시면 어떡해요',
+    opts: [
+      ['죄송합니다 (일어난다)', () => { playerStand(); return ['그래, 고마워요', null]; }],
+      ['제가 허리가 좀 안 좋아서요…', () => {
+        if (!again && Math.random() < .5) { G.seatWarnAt = G.t + 40; return ['아이고, 그래요? 몸조리 잘해요', null]; }
+        jeer(); return ['허리 안 좋은 사람이 그렇게 뛰어와서 앉아?', 'alert'];
+      }],
+      ['(이어폰을 낀다)', () => { jeer(); return ['어허, 말하는데 이어폰을 껴?', 'alert']; }],
+    ],
+    onIgnore: jeer,
+  });
+}
+function talkTick() {
+  if (!TALK.who) return;
+  if (TALK.replyUntil && performance.now() > TALK.replyUntil) closeTalk();
+  else if (TALK.who.out || TALK.who.dead || !G.running || G.over || (TALK.onIgnore && P.state !== 'seat')) closeTalk(true);
+}
+
 /* ================= input ================= */
 addEventListener('keydown', e => {
+  if (TALK.who) {   // a conversation takes the keyboard
+    if (['1', '2', '3'].includes(e.key)) { chooseTalk(+e.key - 1); e.preventDefault(); return; }
+    if (e.key === 'Escape' || e.key === 't' || e.key === 'T') { closeTalk(); e.preventDefault(); return; }
+    if (e.key !== 'p' && e.key !== 'P') { e.preventDefault(); return; }
+  }
   if (e.key === 'Escape' && performance.now() - (FP.lockLostAt || 0) < 400) return;   // that Esc just released the mouse
   if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
     if (G.running && !G.over) { if (G.paused) { G.paused = false; hideModal(); } else pause(); e.preventDefault(); }
@@ -2843,6 +3445,7 @@ addEventListener('keydown', e => {
   else if (k === 'ArrowDown' || k === 's' || k === 'S') move('b');
   else if (k === 'q' || k === 'Q') turn(-1);
   else if (k === 'e' || k === 'E') turn(1);
+  else if (k === 't' || k === 'T') openTalk(talkTarget());
   else if (k === ' ' || k === 'Enter') act();
   else return;
   e.preventDefault();
@@ -2852,16 +3455,18 @@ hold('#b-left', () => move('l')); hold('#b-right', () => move('r'));
 hold('#b-up', () => move('f')); hold('#b-down', () => move('b'));
 hold('#b-tl', () => turn(-1)); hold('#b-tr', () => turn(1));
 hold('#b-act', act);
+hold('#b-talk', () => { if (TALK.who) closeTalk(); else if (G.running && !G.over && !G.paused) openTalk(talkTarget()); });
 function toggleMap() { FP.map = !FP.map; SAVE.map = FP.map; persist(); setView(FP.on); }
 $('#t-view').addEventListener('click', () => setView(!FP.on));
 $('#t-map').addEventListener('click', toggleMap);
+$('#t-gfx').addEventListener('click', () => { if (FP.ready) applyGfx(({ high: 'mid', mid: 'low', low: 'high' })[FP.gfx] || 'high'); });
 cv.addEventListener('pointerdown', e => {
   const r = cv.getBoundingClientRect();
   handleTap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H);
 });
 // a tap at map coordinates (x, y): sit if you can, otherwise walk there
 function handleTap(x, y) {
-  if (!G.running || G.over || G.paused) return;
+  if (!G.running || G.over || G.paused || TALK.who) return;
   const s = SEATS.find(s => Math.abs(x - s.x) < 30 && (s.side ? y > 334 && y < 400 : y > 40 && y < 106));
   if (s) {
     if (P.state === 'seat') { if (s === P.seat) act(); return; }
@@ -2889,7 +3494,8 @@ let last = 0, mapTick = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000 || 0); last = now;
   try {
-    if (G.running && !G.over && !G.paused) update(dt);
+    if (G.running && !G.over && !G.paused) update(TALK.who ? dt * .25 : dt);   // time crawls while you talk
+    talkTick();
     smooth(Math.min(.05, dt));
     const fp = FP.on && FP.ready;
     // in first person the top-down view is only a minimap: redraw it every third frame, or not at all when hidden
